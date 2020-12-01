@@ -1,36 +1,45 @@
 import random
 import math
+import logging
 
-MAX_STEP = 2000
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+
 
 class UserEquipment:
    
-    def __init__(self, env, ue_id, initial_data_rate, starting_position, speed = 0, direction = 0, random = False, _lambda = 1/15):
+    def __init__(self, env, ue_id, initial_data_rate, starting_position, speed = 0, direction = 0, random = False, _lambda_c = None, _lambda_d = None):
         self.ue_id = ue_id
         self.data_rate = initial_data_rate
         self.current_position = starting_position
         self.env = env
-        self.speed = self.speed
-        self.direction = self.direction
-        self._lambda = _lambda
+        self.speed = speed
+        self.direction = direction
+        self._lambda_c = _lambda_c
+        self._lambda_d = _lambda_d
         self.random = random
+
+        self.sampling_time = self.env.get_sampling_time()
 
         self.bs_data_rate_allocation = {}
 
     def get_position(self):
         return self.current_position
+    
+    def get_id(self):
+        return self.ue_id
 
     def move(self):
         if self.speed == 0:
             return
-        if self.random == False:
+        if self.random == True:
             return self.random_move()
         else:
             return self.line_move()
     
     def random_move(self):
         val = random.randint(1, 4)
-        size = random.randint(0, MAX_STEP) 
+        size = random.randint(0, math.floor(self.speed*self.sampling_time))
         x_lim = self.env.get_x_limit()
         y_lim = self.env.get_y_limit()
         if val == 1: 
@@ -48,8 +57,8 @@ class UserEquipment:
         return self.current_position
 
     def line_move(self):
-        new_x = self.current_position[0]+self.speed*math.cos(math.radians(self.direction))
-        new_y = self.current_position[1]+self.speed*math.sin(math.radians(self.direction))
+        new_x = self.current_position[0]+self.speed*self.sampling_time*math.cos(math.radians(self.direction))
+        new_y = self.current_position[1]+self.speed*self.sampling_time*math.sin(math.radians(self.direction))
         x_lim = self.env.get_x_limit()
         y_lim = self.env.get_y_limit()
         # bounce with the same incident angle if a sideo or a corner is reached
@@ -129,14 +138,44 @@ class UserEquipment:
                 # there is another bouncing on the top side
                 new_y = 2*y_lim - new_y
                 self.direction = - self.direction
-                        
+
         self.current_position = (new_x, new_y, self.current_position[2])
         self.direction = self.direction % 360
         return self.current_position
     
-    def measure_rsrp(self, bs):
+    def measure_rsrp(self):
         # measure RSRP together with the BS
         # the result is in dB
-        return bs.compute_rsrp(self)
+        return self.env.compute_rsrp(self)
+    
+    def step(self):
+        self.move()
+        rsrp = self.measure_rsrp()
+        best_bs = None
+        max_rsrp = -200
+        for elem in rsrp:
+            if rsrp[elem] > max_rsrp:
+                best_bs = elem
+                max_rsrp = rsrp[elem]
+        l = list(self.bs_data_rate_allocation.keys())
+        if len(l) == 0:
+            best_bs = self.env.bs_by_id(best_bs)
+            actual_data_rate = best_bs.connect(self.ue_id, self.data_rate, rsrp)
+            self.bs_data_rate_allocation[best_bs.get_id()] = actual_data_rate
+            logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
+        else:
+            current_bs = l[0]
+            if current_bs != best_bs:
+                best_bs = self.env.bs_by_id(best_bs)
+                current_bs = self.env.bs_by_id(current_bs)
+                current_bs.disconnect(self.ue_id)
+                del self.bs_data_rate_allocation[current_bs.get_id()]
+                actual_data_rate = best_bs.connect(self.ue_id, self.data_rate, rsrp)
+                self.bs_data_rate_allocation[best_bs.get_id()] = actual_data_rate
+                logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
+            else:
+                current_bs = self.env.bs_by_id(current_bs)      
+                current_bs.update_connection(self.ue_id, self.data_rate, rsrp)    
+        return
 
     

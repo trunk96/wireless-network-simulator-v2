@@ -1,9 +1,11 @@
 from wns2.basestation.generic import BaseStation
 import math
 from scipy import constants
-import util
 from wns2.environment import environment
 from wns2.pathloss import costhata
+import logging
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
 #Table 5.3.3-1: Minimum guardband [kHz] (FR1) and Table: 5.3.3-2: Minimum guardband [kHz] (FR2), 3GPPP 38.104
 #number of prb depending on the numerology (0,1,2,3), on the frequency range (FR1, FR2) and on the base station bandwidth
@@ -84,10 +86,10 @@ class NRBaseStation(BaseStation):
         self.antenna_gain = antenna_gain
         self.feeder_loss = feeder_loss
         if pathloss == None:
-            self.pathloss = costhata.CostHataPathLoss()
+            self.pathloss = costhata.CostHataPathLoss(costhata.EnvType.URBAN)
         else:
             self.pathloss = pathloss
-        self.max_data_rate = self.max_data_rate
+        self.max_data_rate = max_data_rate
 
         self.total_prb = NRbandwidth_prb_lookup[self.numerology][self.fr][self.total_bandwidth] * (10 * 2**self.numerology) # 10*2^mu time slots in a time frame
         self.subcarrier_bandwidth = 15*(2**self.numerology) #KHz
@@ -100,6 +102,7 @@ class NRBaseStation(BaseStation):
         self.T = 10
         self.resource_utilization_array = [0] * self.T
         self.resource_utilization_counter = 0
+        self.load_history = []
         return
 
     def get_position(self):
@@ -108,12 +111,15 @@ class NRBaseStation(BaseStation):
         return self.carrier_frequency
     def get_bs_type(self):
         return self.bs_type
+    def get_id(self):
+        return self.bs_id
     def get_usage_ratio(self):
         return self.allocated_prb / self.total_prb
 
     def compute_rsrp(self, ue):
         subcarrier_power = 10*math.log10(self.antenna_power*1000 / (12*(self.total_prb/(10*2**self.numerology))))
-        return subcarrier_power + self.antenna_gain -self.feeder_loss - self.pathloss.compute_path_loss(ue, self, self.env.env_type)
+        
+        return subcarrier_power + self.antenna_gain -self.feeder_loss - self.pathloss.compute_path_loss(ue, self)
 
     def get_rbur(self):
         return sum(self.resource_utilization_array)/(self.T*self.total_prb)
@@ -121,19 +127,20 @@ class NRBaseStation(BaseStation):
     def compute_sinr(self, rsrp):
         interference = 0
         for elem in rsrp:
-            bs_i = environment.bs_by_id(elem)
+            bs_i = self.env.bs_by_id(elem)
             if elem != self.bs_id and bs_i.get_carrier_frequency() != self.carrier_frequency:
                 rbur_i = bs_i.get_rbur()
-                interference += (10 ** (rsrp[elem]/10))*rbur_i*self.get_usage_ratio()
+                interference += (10 ** (rsrp[elem]/10))*rbur_i
         thermal_noise = constants.Boltzmann*293.15*15*(2**self.numerology)*1000 # delta_F = 15*2^mu KHz each subcarrier since we are considering measurements at subcarrirer level (like RSRP)
         sinr = (10**(rsrp[self.bs_id]/10))/(thermal_noise + interference)
         return sinr
     
     def compute_prb_NR(self, data_rate, rsrp):
         sinr = self.compute_sinr(rsrp)
+        print(10*math.log10(sinr))
         r = self.subcarrier_bandwidth*1e3*math.log2(1+sinr)*(1/(10*(2**self.numerology))) # if a single RB is allocated we transmit for 1/(10*2^mu) seconds each second
         n_prb = math.ceil(data_rate*1e6/r) # the data-rate is in Mbps, so we had to convert it
-        return n_prb, r*1e6
+        return n_prb, r/1e6
 
     def connect(self, ue_id, desired_data_rate, rsrp):
         # compute the number of PRBs needed for the requested data-rate,
@@ -173,8 +180,9 @@ class NRBaseStation(BaseStation):
         # this can be called if desired_data_rate is changed or if the rsrp is changed
         # compute the number of PRBs needed for the requested data-rate,
         # then allocate them as much as possible
-        self.allocated_prb -= self.ue_pb_allocation[ue_id]
-        self.allocated_data_rate -= self.ue_data_rate_allocation[ue_id]
+        #self.allocated_prb -= self.ue_pb_allocation[ue_id]
+        #self.allocated_data_rate -= self.ue_data_rate_allocation[ue_id]
+        self.disconnect(ue_id)
         return self.connect(ue_id, desired_data_rate, rsrp)
 
     def step(self):
@@ -182,3 +190,5 @@ class NRBaseStation(BaseStation):
         self.resource_utilization_counter += 1
         if self.resource_utilization_counter % self.T == 0:
             self.resource_utilization_counter = 0
+        
+        self.load_history.append(self.get_usage_ratio())

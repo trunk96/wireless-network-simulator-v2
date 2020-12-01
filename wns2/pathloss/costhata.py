@@ -1,5 +1,4 @@
-from . import generic
-from generic import GenericPathLoss
+from wns2.pathloss.generic import GenericPathLoss
 import math
 from enum import Enum
 import logging
@@ -12,11 +11,11 @@ class EnvType(Enum):
     URBAN = 2
 
 class CostHataPathLoss(GenericPathLoss):
-    def __init__(self):
-        super.__init__()
+    def __init__(self, env_type = EnvType.URBAN):
+        self.env_type = env_type
         return
     
-    def compute_path_loss(self, ue, bs, env_type):
+    def compute_path_loss(self, ue, bs):
         #check feasibility
         ue_pos = ue.get_position()
         bs_pos = bs.get_position()
@@ -37,9 +36,9 @@ class CostHataPathLoss(GenericPathLoss):
             C_0 = 69.55
             C_f = 26.16
             b = 13.82*math.log10(bs_pos[2])
-            if env_type == EnvType.URBAN:
+            if self.env_type == EnvType.URBAN:
                 C_m = 0
-            elif env_type == EnvType.SUBURBAN:
+            elif self.env_type == EnvType.SUBURBAN:
                 C_m = -2*((math.log10(bs_frequency/28))**2) - 5.4
             else:
                 C_m = -4.78*((math.log10(bs_frequency))**2) + 18.33*math.log10(bs_frequency) - 40.94
@@ -47,14 +46,14 @@ class CostHataPathLoss(GenericPathLoss):
             C_0 = 46.3
             C_f = 26.16
             b = 13.82*math.log10(bs_pos[2])
-            if env_type == EnvType.URBAN:
+            if self.env_type == EnvType.URBAN:
                 C_m = 3
-            elif env_type == EnvType.SUBURBAN:
+            elif self.env_type == EnvType.SUBURBAN:
                 C_m = 0
             else:
                 raise Exception("COST-HATA model is not defined for frequencies in 1500-2000MHz with RURAL environments")
         
-        if env_type == EnvType.SUBURBAN or env_type == EnvType.RURAL:
+        if self.env_type == EnvType.SUBURBAN or self.env_type == EnvType.RURAL:
             a = (1.1*math.log10(bs_frequency) - 0.7)*ue_pos[2] - 1.56*math.log10(bs_frequency) + 0.8
         else:
             if bs_frequency >= 150 and bs_frequency <= 300:

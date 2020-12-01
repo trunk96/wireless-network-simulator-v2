@@ -12,6 +12,9 @@ class BaseStation:
     def get_bs_type(self):
         return NotImplementedError
     
+    def get_id(self):
+        return NotImplementedError
+    
     def compute_rsrp(self, ue):
         return NotImplementedError
 
