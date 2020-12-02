@@ -1,6 +1,7 @@
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.gridspec as gridspec
 import numpy as np
 MIN_RSRP = -140
 
@@ -52,17 +53,23 @@ class Environment:
     def render(self):
         if self.plt_run == 0:
             plt.ion()
-            self.fig, self.ax = plt.subplots()
+            self.fig = plt.figure(constrained_layout=True)
+            self.gs = gridspec.GridSpec(ncols=6, nrows=2*len(self.bs_list), figure=self.fig)
             self.plt_run = 1
-
         
         x_ue = []
         y_ue = []
         x_bs = []
         y_bs = []
 
-        plt.cla()
-
+        plt.clf()        
+        self.ax = self.fig.add_subplot(self.gs[:,0:2])
+        self.axs = {}
+        self.axz = {}
+        for elem in self.bs_list:
+            self.axs[elem] = self.fig.add_subplot(self.gs[elem*2:elem*2+1, 2:4])
+        for elem in self.bs_list:
+            self.axz[elem] = self.fig.add_subplot(self.gs[elem*2:elem*2+1, 4:6])
 
         #ax.set_xlim(0, env.x_limit)
         #ax.set_ylim(0, env.y_limit)
@@ -98,13 +105,28 @@ class Environment:
         
         for j in self.bs_list:
             self.ax.annotate("BS"+str(j), (x_bs[j], y_bs[j]))
+        
+        for elem in self.bs_list:
+            self.axs[elem].plot(np.arange(0,len(self.bs_list[elem].load_history)), self.bs_list[elem].load_history, color = colors[elem])
+            self.axs[elem].grid(True)
+            self.axs[elem].set_ylabel("%")
+            self.axs[elem].set_xlabel("timestep")
+            self.axs[elem].set_ylim(0,1.1)
+        for elem in self.bs_list:
+            self.axz[elem].plot(np.arange(0,len(self.bs_list[elem].data_rate_history)), self.bs_list[elem].data_rate_history, color = colors[elem])
+            self.axz[elem].grid(True)
+            self.axz[elem].set_ylabel("Mbps")
+            self.axz[elem].set_xlabel("timestep")
+            
 
         self.ax.grid(True)
         self.ax.set_ylabel("[m]")
         self.ax.set_xlabel("[m]")
         self.ax.set_xlim(0, self.l)
         self.ax.set_ylim(0, self.h)
+        #plt.draw()
         self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
     def bs_by_id(self, id):
         return self.bs_list[id]

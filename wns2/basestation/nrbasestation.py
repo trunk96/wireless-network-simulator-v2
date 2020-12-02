@@ -7,6 +7,8 @@ import logging
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
+MAX_PRB = 200
+
 #Table 5.3.3-1: Minimum guardband [kHz] (FR1) and Table: 5.3.3-2: Minimum guardband [kHz] (FR2), 3GPPP 38.104
 #number of prb depending on the numerology (0,1,2,3), on the frequency range (FR1, FR2) and on the base station bandwidth
 NRbandwidth_prb_lookup = {
@@ -103,6 +105,7 @@ class NRBaseStation(BaseStation):
         self.resource_utilization_array = [0] * self.T
         self.resource_utilization_counter = 0
         self.load_history = []
+        self.data_rate_history = []
         return
 
     def get_position(self):
@@ -128,7 +131,7 @@ class NRBaseStation(BaseStation):
         interference = 0
         for elem in rsrp:
             bs_i = self.env.bs_by_id(elem)
-            if elem != self.bs_id and bs_i.get_carrier_frequency() != self.carrier_frequency:
+            if elem != self.bs_id and bs_i.get_carrier_frequency() == self.carrier_frequency:
                 rbur_i = bs_i.get_rbur()
                 interference += (10 ** (rsrp[elem]/10))*rbur_i
         thermal_noise = constants.Boltzmann*293.15*15*(2**self.numerology)*1000 # delta_F = 15*2^mu KHz each subcarrier since we are considering measurements at subcarrirer level (like RSRP)
@@ -157,6 +160,9 @@ class NRBaseStation(BaseStation):
         if self.total_prb - self.allocated_prb < n_prb:
             n_prb = self.total_prb - self.allocated_prb
         
+        if n_prb > MAX_PRB and self.get_usage_ratio() > 0.8:
+            n_prb = MAX_PRB
+        
         if ue_id in self.ue_pb_allocation:
             self.allocated_prb -= self.ue_pb_allocation[ue_id]
         self.ue_pb_allocation[ue_id] = n_prb
@@ -164,8 +170,8 @@ class NRBaseStation(BaseStation):
 
         if ue_id in self.ue_data_rate_allocation:
             self.allocated_data_rate -= self.ue_data_rate_allocation[ue_id]
-        self.ue_data_rate_allocation[ue_id] = r
-        self.allocated_data_rate += r 
+        self.ue_data_rate_allocation[ue_id] = n_prb*r
+        self.allocated_data_rate += n_prb*r 
         return r*n_prb
     
     def disconnect(self, ue_id):
@@ -191,3 +197,4 @@ class NRBaseStation(BaseStation):
             self.resource_utilization_counter = 0
         
         self.load_history.append(self.get_usage_ratio())
+        self.data_rate_history.append(self.allocated_data_rate)
