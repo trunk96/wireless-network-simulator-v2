@@ -1,6 +1,7 @@
 import random
 import math
 import logging
+import numpy.random
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
@@ -16,7 +17,10 @@ class UserEquipment:
         self.speed = speed
         self.direction = direction
         self._lambda_c = _lambda_c
+        if self._lambda_c != None:
+            self.connection_time_to_wait = numpy.random.poisson(self._lambda_c)
         self._lambda_d = _lambda_d
+        self.last_time = 0
         self.random = random
 
         self.sampling_time = self.env.get_sampling_time()
@@ -148,8 +152,40 @@ class UserEquipment:
         # the result is in dB
         return self.env.compute_rsrp(self)
     
+    def get_current_bs(self):
+        if len(self.bs_data_rate_allocation) == 0:
+            return None
+        else:
+            return list(self.bs_data_rate_allocation.keys())[0]
+    
     def step(self):
         self.move()
+        if len(self.bs_data_rate_allocation) == 0:
+            # no BS connected, decide if it is time to connect
+            if self._lambda_c == None:
+                self.connect_max_rsrp()
+            elif self.last_time >= self.connection_time_to_wait:
+                self.last_time = 0
+                self.connect_max_rsrp()
+                if self._lambda_d != None:
+                    self.disconnection_time_to_wait = numpy.random.poisson(self._lambda_d)
+            else:
+                self.last_time += 1
+        else:
+            if self._lambda_d == None:
+                self.connect_max_rsrp()
+            elif self.last_time >= self.disconnection_time_to_wait:
+                self.last_time = 0
+                self.disconnect()
+                if self._lambda_c != None:
+                    self.connection_time_to_wait = numpy.random.poisson(self._lambda_c)
+            else:
+                self.last_time += 1
+                self.connect_max_rsrp()
+
+        return
+
+    def connect_max_rsrp(self):
         rsrp = self.measure_rsrp()
         best_bs = None
         max_rsrp = -200
@@ -157,25 +193,31 @@ class UserEquipment:
             if rsrp[elem] > max_rsrp:
                 best_bs = elem
                 max_rsrp = rsrp[elem]
-        l = list(self.bs_data_rate_allocation.keys())
-        if len(l) == 0:
+        if len(self.bs_data_rate_allocation) == 0:
+            # no BS connected
             best_bs = self.env.bs_by_id(best_bs)
             actual_data_rate = best_bs.connect(self.ue_id, self.data_rate, rsrp)
             self.bs_data_rate_allocation[best_bs.get_id()] = actual_data_rate
             logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
         else:
-            current_bs = l[0]
+            current_bs = self.get_current_bs()
             if current_bs != best_bs:
+                self.disconnect()
                 best_bs = self.env.bs_by_id(best_bs)
-                current_bs = self.env.bs_by_id(current_bs)
-                current_bs.disconnect(self.ue_id)
-                del self.bs_data_rate_allocation[current_bs.get_id()]
                 actual_data_rate = best_bs.connect(self.ue_id, self.data_rate, rsrp)
                 self.bs_data_rate_allocation[best_bs.get_id()] = actual_data_rate
-                logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
+                logging.info("UE %s switched to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
             else:
-                current_bs = self.env.bs_by_id(current_bs)      
-                current_bs.update_connection(self.ue_id, self.data_rate, rsrp)    
+                current_bs = self.env.bs_by_id(current_bs)
+                current_bs.update_connection(self.ue_id, self.data_rate, rsrp)
         return
+
+    def disconnect(self):
+        current_bs = self.get_current_bs()
+        self.env.bs_by_id(current_bs).disconnect(self.ue_id)
+        del self.bs_data_rate_allocation[current_bs]
+
+
+        
 
     

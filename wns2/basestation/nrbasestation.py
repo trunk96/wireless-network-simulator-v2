@@ -137,7 +137,6 @@ class NRBaseStation(BaseStation):
     
     def compute_prb_NR(self, data_rate, rsrp):
         sinr = self.compute_sinr(rsrp)
-        print(10*math.log10(sinr))
         r = self.subcarrier_bandwidth*1e3*math.log2(1+sinr)*(1/(10*(2**self.numerology))) # if a single RB is allocated we transmit for 1/(10*2^mu) seconds each second
         n_prb = math.ceil(data_rate*1e6/r) # the data-rate is in Mbps, so we had to convert it
         return n_prb, r/1e6

@@ -8,9 +8,9 @@ x_lim = 1000
 y_lim = 1000
 env = Environment(x_lim, y_lim)
 
-for i in range(0, 1):
+for i in range(0, 10):
     pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
-    env.add_user(UserEquipment(env, i, 5, pos, speed = 10, direction = random.randint(0, 360)))
+    env.add_user(UserEquipment(env, i, 5, pos, speed = 10, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 20))
 
 bs_parm =[{"pos": (500, 750, 40),
     "freq": 800,
@@ -54,7 +54,7 @@ bs_parm =[{"pos": (500, 750, 40),
 
 for i in range(4): # range(len(bs_parm)):
     env.add_base_station(NRBaseStation(env, i, bs_parm[i]["pos"], bs_parm[i]["freq"], bs_parm[i]["bandwidth"], bs_parm[i]["numerology"], bs_parm[i]["max_bitrate"], bs_parm[i]["power"], bs_parm[i]["gain"], bs_parm[i]["loss"]))
-    print(env.bs_list[i].total_prb)
+
 counter = 100
 while counter != 0:
     env.render()
