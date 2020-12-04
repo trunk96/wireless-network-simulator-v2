@@ -9,81 +9,26 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 MAX_PRB = 200
 
-#Table 5.3.3-1: Minimum guardband [kHz] (FR1) and Table: 5.3.3-2: Minimum guardband [kHz] (FR2), 3GPPP 38.104
-#number of prb depending on the numerology (0,1,2,3), on the frequency range (FR1, FR2) and on the base station bandwidth
-NRbandwidth_prb_lookup = {
-    0:[{
-        5:25,
-        10:52,
-        15:79,
-        20:106,
-        25:133,
-        30:160,
-        40:216,
-        50:270
-    }, None],
-    1:[{
-        5:11,
-        10:24,
-        15:38,
-        20:51,
-        25:65,
-        30:78,
-        40:106,
-        50:133,
-        60:162,
-        70:189,
-        80:217,
-        90:245,
-        100:273
-    }, None],
-    2:[{
-        10:11,
-        15:18,
-        20:24,
-        25:31,
-        30:38,
-        40:51,
-        50:65,
-        60:79,
-        70:93,
-        80:107,
-        90:121,
-        100:135
-    },
-    {
-        50:66,
-        100:132,
-        200:264
-    }],
-    3:[None, 
-    {
-        50:32,
-        100:66,
-        200:132,
-        400:264
-    }]
+# From LTE Standards, first item is bandwidth in MHz, second item is the number of resource blocks
+LTEbandwidth_prb_lookup = {
+    1.4: 6,
+    3: 15,
+    5: 25,
+    10: 50,
+    15: 75,
+    20: 100
 }
 
-class NRBaseStation(BaseStation):
-    def __init__(self, env, bs_id, position, carrier_frequency, total_bandwidth, numerology, max_data_rate = None, antenna_power = 20, antenna_gain = 16, feeder_loss = 3, pathloss = None):
-        if numerology not in NRbandwidth_prb_lookup:
-            raise Exception("Invalid numerology for Base Station "+str(bs_id))
-        if carrier_frequency >= 410 and carrier_frequency <=7125: # MHz
-            self.fr = 0 # Frequency Range 1 (sub 6GHz)
-        elif carrier_frequency >= 24250 and carrier_frequency <= 52600: #MHz
-            self.fr = 1 # Frequency Range 2 (24.25-52.6GHz)
-        else:
-            raise Exception("Invalid carirer frequency for Base Station "+str(bs_id))
-        if total_bandwidth not in NRbandwidth_prb_lookup[numerology][self.fr]:
+class LTEBaseStation(BaseStation):
+    def __init__(self, env, bs_id, position, carrier_frequency, total_bandwidth, max_data_rate = None, antenna_power = 20, antenna_gain = 16, feeder_loss = 3, pathloss = None):
+        if total_bandwidth not in LTEbandwidth_prb_lookup:
             raise Exception("Invalid total bandwith for Base Station "+str(bs_id))
         self.env = env
         self.bs_id = bs_id
-        self.bs_type = "nr"
+        self.bs_type = "lte"
         self.position = position
         self.carrier_frequency = carrier_frequency
         self.total_bandwidth = total_bandwidth
-        self.numerology = numerology
         self.antenna_power = antenna_power
         self.antenna_gain = antenna_gain
         self.feeder_loss = feeder_loss
@@ -93,8 +38,8 @@ class NRBaseStation(BaseStation):
             self.pathloss = pathloss
         self.max_data_rate = max_data_rate
 
-        self.total_prb = NRbandwidth_prb_lookup[self.numerology][self.fr][self.total_bandwidth] * (10 * 2**self.numerology) # 10*2^mu time slots in a time frame
-        self.subcarrier_bandwidth = 15*(2**self.numerology) #KHz
+        self.total_prb = LTEbandwidth_prb_lookup[self.total_bandwidth] * 10 # 10 time slots in a time frame
+        self.subcarrier_bandwidth = 15 #KHz
 
         # allocation structures
         self.ue_pb_allocation = {}
@@ -120,7 +65,7 @@ class NRBaseStation(BaseStation):
         return self.allocated_prb / self.total_prb
 
     def compute_rsrp(self, ue):
-        subcarrier_power = 10*math.log10(self.antenna_power*1000 / (12*(self.total_prb/(10*2**self.numerology))))
+        subcarrier_power = 10*math.log10(self.antenna_power*1000 / (12*(self.total_prb/10)))
         return subcarrier_power + self.antenna_gain -self.feeder_loss - self.pathloss.compute_path_loss(ue, self)
 
     def get_rbur(self):
@@ -133,14 +78,14 @@ class NRBaseStation(BaseStation):
             if elem != self.bs_id and bs_i.get_carrier_frequency() == self.carrier_frequency:
                 rbur_i = bs_i.get_rbur()
                 interference += (10 ** (rsrp[elem]/10))*rbur_i
-        thermal_noise = constants.Boltzmann*293.15*15*(2**self.numerology)*1000 # delta_F = 15*2^mu KHz each subcarrier since we are considering measurements at subcarrirer level (like RSRP)
+        thermal_noise = constants.Boltzmann*293.15*15*1000 # delta_F = 15 KHz each subcarrier since we are considering measurements at subcarrirer level (like RSRP)
         sinr = (10**(rsrp[self.bs_id]/10))/(thermal_noise + interference)
         logging.debug("BS %s -> SINR: %s", self.bs_id, str(10*math.log10(sinr)))
         return sinr
     
     def compute_prb_NR(self, data_rate, rsrp):
         sinr = self.compute_sinr(rsrp)
-        r = 12*self.subcarrier_bandwidth*1e3*math.log2(1+sinr)*(1/(10*(2**self.numerology))) # if a single RB is allocated we transmit for 1/(10*2^mu) seconds each second in 12*15*2^mu KHz bandwidth
+        r = 12*self.subcarrier_bandwidth*1e3*math.log2(1+sinr)*(1/10) # if a single RB is allocated we transmit for 1/10 seconds each second in 12*15 KHz bandwidth
         n_prb = math.ceil(data_rate*1e6/r) # the data-rate is in Mbps, so we had to convert it
         return n_prb, r/1e6
 
