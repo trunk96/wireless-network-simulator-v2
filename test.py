@@ -1,6 +1,7 @@
 from wns2.basestation.nrbasestation import NRBaseStation
 from wns2.userequipment.userequipment import UserEquipment
 from wns2.environment.environment import Environment
+from wns2.renderer.renderer import CustomRenderer
 import numpy.random as random
 import logging
 
@@ -10,7 +11,7 @@ logger.setLevel(level=logging.INFO)
 
 x_lim = 1000
 y_lim = 1000
-env = Environment(x_lim, y_lim)
+env = Environment(x_lim, y_lim, renderer = CustomRenderer())
 
 for i in range(0, 50):
     pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
