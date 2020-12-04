@@ -14,7 +14,7 @@ env = Environment(x_lim, y_lim)
 
 for i in range(0, 50):
     pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
-    env.add_user(UserEquipment(env, i, 5, pos, speed = 10, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
+    env.add_user(UserEquipment(env, i, 25, pos, speed = 10, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
 
 bs_parm =[{"pos": (500, 500, 30),
     "freq": 800,

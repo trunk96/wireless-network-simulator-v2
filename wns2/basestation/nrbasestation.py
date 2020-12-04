@@ -136,11 +136,12 @@ class NRBaseStation(BaseStation):
                 interference += (10 ** (rsrp[elem]/10))*rbur_i
         thermal_noise = constants.Boltzmann*293.15*15*(2**self.numerology)*1000 # delta_F = 15*2^mu KHz each subcarrier since we are considering measurements at subcarrirer level (like RSRP)
         sinr = (10**(rsrp[self.bs_id]/10))/(thermal_noise + interference)
+        logging.debug("BS %s -> SINR: %s", self.bs_id, str(10*math.log10(sinr)))
         return sinr
     
     def compute_prb_NR(self, data_rate, rsrp):
         sinr = self.compute_sinr(rsrp)
-        r = self.subcarrier_bandwidth*1e3*math.log2(1+sinr)*(1/(10*(2**self.numerology))) # if a single RB is allocated we transmit for 1/(10*2^mu) seconds each second
+        r = 12*self.subcarrier_bandwidth*1e3*math.log2(1+sinr)*(1/(10*(2**self.numerology))) # if a single RB is allocated we transmit for 1/(10*2^mu) seconds each second in 12*15*2^mu KHz bandwidth
         n_prb = math.ceil(data_rate*1e6/r) # the data-rate is in Mbps, so we had to convert it
         return n_prb, r/1e6
 
