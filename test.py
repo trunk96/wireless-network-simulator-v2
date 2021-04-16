@@ -1,4 +1,5 @@
 from wns2.basestation.nrbasestation import NRBaseStation
+from wns2.basestation.satellitebasestation import SatelliteBaseStation
 from wns2.userequipment.userequipment import UserEquipment
 from wns2.environment.environment import Environment
 from wns2.renderer.renderer import CustomRenderer
@@ -89,6 +90,8 @@ bs_parm =[{"pos": (500, 500, 30),
 
 for i in range(len(bs_parm)):
     env.add_base_station(NRBaseStation(env, i, bs_parm[i]["pos"], bs_parm[i]["freq"], bs_parm[i]["bandwidth"], bs_parm[i]["numerology"], bs_parm[i]["max_bitrate"], bs_parm[i]["power"], bs_parm[i]["gain"], bs_parm[i]["loss"]))
+
+env.add_base_station(SatelliteBaseStation(env, i+1, (250, 500, 35786000)))
 
 counter = 1000
 while counter != 0:

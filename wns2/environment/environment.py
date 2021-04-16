@@ -38,7 +38,7 @@ class Environment:
         rsrp = {}
         for bs in self.bs_list:
             rsrp_i = self.bs_list[bs].compute_rsrp(ue)
-            if rsrp_i > MIN_RSRP:
+            if rsrp_i > MIN_RSRP or self.bs_list[bs].get_bs_type() == "sat":
                 rsrp[bs] = rsrp_i
         return rsrp
         

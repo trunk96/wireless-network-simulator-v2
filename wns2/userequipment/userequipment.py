@@ -187,6 +187,8 @@ class UserEquipment:
 
     def connect_max_rsrp(self):
         rsrp = self.measure_rsrp()
+        if len(rsrp) == 0:
+            return
         best_bs = None
         max_rsrp = -200
         for elem in rsrp:
@@ -209,7 +211,9 @@ class UserEquipment:
                 logging.info("UE %s switched to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
             else:
                 current_bs = self.env.bs_by_id(current_bs)
-                current_bs.update_connection(self.ue_id, self.data_rate, rsrp)
+                actual_data_rate = current_bs.update_connection(self.ue_id, self.data_rate, rsrp)
+                logging.info("UE %s updated to BS %s with data rate %s --> %s", self.ue_id, current_bs.get_id(), self.bs_data_rate_allocation[current_bs.get_id()], actual_data_rate)
+                self.bs_data_rate_allocation[current_bs.get_id()] = actual_data_rate
         return
 
     def disconnect(self):
