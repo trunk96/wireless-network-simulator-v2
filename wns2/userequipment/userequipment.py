@@ -184,6 +184,12 @@ class UserEquipment:
                 self.connect_max_rsrp()
 
         return
+    
+    def connect_bs(self, bs):
+        rsrp = self.measure_rsrp()
+        if len(rsrp) == 0:
+            return
+        return self.connect_(bs, rsrp)
 
     def connect_max_rsrp(self):
         rsrp = self.measure_rsrp()
@@ -195,20 +201,23 @@ class UserEquipment:
             if rsrp[elem] > max_rsrp:
                 best_bs = elem
                 max_rsrp = rsrp[elem]
+        return self.connect_(best_bs)
+
+    def connect_(self, bs, rsrp):
         if len(self.bs_data_rate_allocation) == 0:
             # no BS connected
-            best_bs = self.env.bs_by_id(best_bs)
-            actual_data_rate = best_bs.connect(self.ue_id, self.data_rate, rsrp)
-            self.bs_data_rate_allocation[best_bs.get_id()] = actual_data_rate
-            logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
+            bs = self.env.bs_by_id(bs)
+            actual_data_rate = bs.connect(self.ue_id, self.data_rate, rsrp)
+            self.bs_data_rate_allocation[bs.get_id()] = actual_data_rate
+            logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, bs.get_id(), actual_data_rate)
         else:
             current_bs = self.get_current_bs()
-            if current_bs != best_bs:
+            if current_bs != bs:
                 self.disconnect()
-                best_bs = self.env.bs_by_id(best_bs)
-                actual_data_rate = best_bs.connect(self.ue_id, self.data_rate, rsrp)
-                self.bs_data_rate_allocation[best_bs.get_id()] = actual_data_rate
-                logging.info("UE %s switched to BS %s with data rate %s", self.ue_id, best_bs.get_id(), actual_data_rate)
+                bs = self.env.bs_by_id(bs)
+                actual_data_rate = bs.connect(self.ue_id, self.data_rate, rsrp)
+                self.bs_data_rate_allocation[bs.get_id()] = actual_data_rate
+                logging.info("UE %s switched to BS %s with data rate %s", self.ue_id, bs.get_id(), actual_data_rate)
             else:
                 current_bs = self.env.bs_by_id(current_bs)
                 actual_data_rate = current_bs.update_connection(self.ue_id, self.data_rate, rsrp)
