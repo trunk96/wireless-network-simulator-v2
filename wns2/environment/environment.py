@@ -12,6 +12,7 @@ class Environment:
         self.h = h
         self.l = l
         self.ue_list = {}
+        self.connection_advertisement = []
         self.bs_list = {}
         self.sampling_time = sampling_time
         self.renderer = renderer
@@ -26,6 +27,9 @@ class Environment:
     
     def remove_user(self, ue_id):
         if ue_id in self.ue_list:
+            if self.ue_list[ue_id].get_current_bs() != None:
+                bs = self.ue_list[ue_id].get_current_bs()
+                self.ue_list[ue_id].disconnect(bs)
             del self.ue_list[ue_id]
 
     def add_base_station(self, bs):
@@ -41,8 +45,13 @@ class Environment:
             if rsrp_i > MIN_RSRP or self.bs_list[bs].get_bs_type() == "sat":
                 rsrp[bs] = rsrp_i
         return rsrp
+    
+    def advertise_connection(self, ue_id):
+        self.connection_advertisement.append(ue_id)
+        return
         
     def step(self):
+        self.connection_advertisement = []
         for ue in self.ue_list:
             self.ue_list[ue].step()
         for bs in self.bs_list:

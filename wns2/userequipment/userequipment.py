@@ -157,23 +157,23 @@ class UserEquipment:
             return None
         else:
             return list(self.bs_data_rate_allocation.keys())[0]
-    
-    def step(self):
-        self.move()
+
+    def advertise_connection(self):
         if len(self.bs_data_rate_allocation) == 0:
             # no BS connected, decide if it is time to connect
             if self._lambda_c == None:
-                self.connect_max_rsrp()
+                self.env.advertise_connection(self.ue_id)
             elif self.last_time >= self.connection_time_to_wait:
                 self.last_time = 0
-                self.connect_max_rsrp()
+                self.env.advertise_connection(self.ue_id)
                 if self._lambda_d != None:
                     self.disconnection_time_to_wait = numpy.random.poisson(self._lambda_d)
             else:
                 self.last_time += 1
         else:
             if self._lambda_d == None:
-                self.connect_max_rsrp()
+                # ENABLE THIS LINE IF WE WANT TO RECONNECT EACH TIMESTEP
+                self.env.advertise_connection(self.ue_id)
             elif self.last_time >= self.disconnection_time_to_wait:
                 self.last_time = 0
                 self.disconnect()
@@ -181,8 +181,12 @@ class UserEquipment:
                     self.connection_time_to_wait = numpy.random.poisson(self._lambda_c)
             else:
                 self.last_time += 1
-                self.connect_max_rsrp()
-
+                # ENABLE THIS LINE IF WE WANT TO RECONNECT EACH TIMESTEP
+                self.env.advertise_connection(self.ue_id)
+    
+    def step(self):
+        self.move()
+        self.advertise_connection()
         return
     
     def connect_bs(self, bs):
@@ -201,7 +205,7 @@ class UserEquipment:
             if rsrp[elem] > max_rsrp:
                 best_bs = elem
                 max_rsrp = rsrp[elem]
-        return self.connect_(best_bs)
+        return self.connect_(best_bs, rsrp)
 
     def connect_(self, bs, rsrp):
         if len(self.bs_data_rate_allocation) == 0:
@@ -228,6 +232,11 @@ class UserEquipment:
     def disconnect(self):
         current_bs = self.get_current_bs()
         self.env.bs_by_id(current_bs).disconnect(self.ue_id)
+        del self.bs_data_rate_allocation[current_bs]
+    
+    def requested_disconnect(self):
+        # this is called if the env or the BS requested a disconnection
+        current_bs = self.get_current_bs()
         del self.bs_data_rate_allocation[current_bs]
 
 
