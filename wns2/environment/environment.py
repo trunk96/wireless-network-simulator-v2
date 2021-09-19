@@ -50,13 +50,17 @@ class Environment:
         self.connection_advertisement.append(ue_id)
         return
         
-    def step(self):
-        self.connection_advertisement = []
+    def step(self): 
+        self.connection_advertisement.clear()
         for ue in self.ue_list:
             self.ue_list[ue].step()
         for bs in self.bs_list:
             self.bs_list[bs].step()
         return
+        
+        # call here the optimizator, taking the w from users (with data_generation_status and input_data_rate)
+        # set the desired data rate for all the users, connecting to the BSs
+        # move the drone AP according to the weighted average of the positions of the UEs connected to
 
     
     def render(self):

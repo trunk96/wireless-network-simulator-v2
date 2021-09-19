@@ -1,4 +1,5 @@
 from wns2.basestation.nrbasestation import NRBaseStation
+from wns2.basestation.dronebasestation import DroneBaseStation
 from wns2.basestation.satellitebasestation import SatelliteBaseStation
 from wns2.userequipment.userequipment import UserEquipment
 from wns2.environment.environment import Environment
@@ -7,7 +8,7 @@ import numpy.random as random
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(level=logging.INFO)
+logger.setLevel(level=logging.DEBUG)
 
 
 x_lim = 1000
