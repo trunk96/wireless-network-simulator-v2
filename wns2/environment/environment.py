@@ -14,7 +14,7 @@ class Environment:
         self.ue_list = {}
         self.connection_advertisement = []
         self.bs_list = {}
-        self.sampling_time = sampling_time
+        self.sampling_time = sampling_time # in seconds
         self.renderer = renderer
         self.plt_run = 0
         return

@@ -15,7 +15,7 @@ class UserEquipment:
         self.input_data_rate = initial_data_rate
         self.current_position = starting_position
         self.env = env
-        self.speed = speed
+        self.speed = speed * self.env.get_sampling_time()
         self.direction = direction
         self._lambda_c = _lambda_c
         if self._lambda_c != None:
@@ -173,7 +173,7 @@ class UserEquipment:
         if self.data_generation_status == True:
             total_output_data_rate = 0
             for elem in self.output_data_rate:
-                total_output_data_rate += self.output_data_rate[elem]
+                total_output_data_rate += min(self.output_data_rate[elem], self.bs_data_rate_allocation[elem])  # do not transmit more than what is allocated
             self.queue += self.sampling_time * (self.input_data_rate - total_output_data_rate)
     
     def generate_input_data_rate(self):

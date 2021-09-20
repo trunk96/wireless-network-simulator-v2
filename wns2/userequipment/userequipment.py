@@ -14,7 +14,7 @@ class UserEquipment:
         self.data_rate = initial_data_rate
         self.current_position = starting_position
         self.env = env
-        self.speed = speed
+        self.speed = speed * self.env.get_sampling_time()
         self.direction = direction
         self._lambda_c = _lambda_c
         if self._lambda_c != None:

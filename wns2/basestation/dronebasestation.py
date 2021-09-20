@@ -15,7 +15,8 @@ class DroneBaseStation(NRBaseStation):
         return super().__init__(env, bs_id, position, carrier_frequency, total_bandwidth, numerology, max_data_rate = None, antenna_power = 20, antenna_gain = 16, feeder_loss = 3, pathloss = None)
 
     def move(self, destination, speed):
-        print("Destination %s %s %s" %(destination[0], destination[1], destination[2]))
+        logging.debug("Destination %s %s %s" %(destination[0], destination[1], destination[2]))
+        speed *= self.env.get_sampling_time() # scale the speed (that is given in m/s) according to the environment sampling time
         x_k = destination[0] - self.position[0]
         y_k = destination[1] - self.position[1]
         z_k = destination[2] - self.position[2]
@@ -39,4 +40,4 @@ class DroneBaseStation(NRBaseStation):
         new_theta = self.theta_k + w_k
         self.position = (new_x, new_y, new_z)
         self.theta_k = new_theta
-        print("Moved to position %s %s %s" %(self.position[0], self.position[1], self.position[2]))
+        logging.debug("Moved to position %s %s %s" %(self.position[0], self.position[1], self.position[2]))
