@@ -7,7 +7,7 @@ import numpy.random
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
 
-class UserEquipment:
+class MultiPathUserEquipment:
    
     def __init__(self, env, ue_id, initial_data_rate, starting_position, speed = 0, direction = 0, random = False, _lambda_c = None, _lambda_d = None):
         self.ue_id = ue_id
@@ -169,14 +169,18 @@ class UserEquipment:
             self.env.advertise_connection(self.ue_id)            
         return
 
-    def update_queue(self):           
+    def update_queue(self):
+        total_output_data_rate = 0
+        for elem in self.output_data_rate:
+            total_output_data_rate += min(self.output_data_rate[elem], self.bs_data_rate_allocation[elem])  # do not transmit more than what is allocated           
         if self.data_generation_status == True:
-            total_output_data_rate = 0
-            for elem in self.output_data_rate:
-                total_output_data_rate += min(self.output_data_rate[elem], self.bs_data_rate_allocation[elem])  # do not transmit more than what is allocated
             self.queue += self.sampling_time * (self.input_data_rate - total_output_data_rate)
+        else:
+            self.queue += self.sampling_time * total_output_data_rate
     
     def generate_input_data_rate(self):
+        if self.time_to_wait == None:
+            return
         if self.last_time >= self.time_to_wait:
             self.last_time = 0
             if self.data_generation_status == False:
@@ -187,9 +191,9 @@ class UserEquipment:
                 else:
                     self.time_to_wait = None
             else:
+                self.data_generation_status = False
                 if self._lambda_c != None:
                     self.time_to_wait = numpy.random.poisson(self._lambda_c)
-                    self.data_generation_status = False
                 else:
                     self.time_to_wait = None
         else:
