@@ -52,7 +52,7 @@ def output_datarate_optimization_PYOMO(q, w, N, M, P, T_s, U_max=1000, Q_max=1, 
     m.queue_constraint_lower = pyo.Constraint(m.N, rule = queue_constraint_lower_rule)
     m.queue_constraint_upper = pyo.Constraint(m.N, rule = queue_constraint_upper_rule)
     m.obj = pyo.Objective(rule = obj_rule)
-    opt = pyo.SolverFactory("ipopt", executable="D:\\Users\\Emanuele-PC\\Desktop\\ipopt-win64\\ipopt.exe")
+    opt = pyo.SolverFactory("ipopt", executable="ipopt-win64\\ipopt.exe")
     ret = opt.solve(m)
     u_final = np.zeros((N,M))
     for i in range(N):
