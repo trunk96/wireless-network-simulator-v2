@@ -14,6 +14,8 @@ def output_datarate_optimization(q, w, N, M, P, T_s, U_max=1000, Q_max=1, tol=1e
     inputs: q(k) and w(k) and P(k) 
     set of base stations visible by sensors
     '''
+    if N == 0:
+        return []
     
     
     #initialize the model
@@ -50,7 +52,7 @@ def output_datarate_optimization(q, w, N, M, P, T_s, U_max=1000, Q_max=1, tol=1e
     
     #Load balancing
        
-    m.Obj(sum([(sum(u_k[:,i])-sum(u_k[:,j]))**2 for i in range(M) for j in range(M)]) + 100*sum([(q_k[i] + T_s*(w_k[i] - sum(u_k[i,:])))**2 for i in range(N)]))                                                
+    m.Obj(sum([(sum(u_k[:,i])-sum(u_k[:,j])) for i in range(M) for j in range(M)]) + 100*sum([(q_k[i] + T_s*(w_k[i] - sum(u_k[i,:]))) for i in range(N)]))                                                
     m.solve(disp=False)
     u_final = np.zeros((N,M))
     for i in range(N):

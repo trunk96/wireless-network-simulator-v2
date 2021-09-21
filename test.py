@@ -2,22 +2,23 @@ from wns2.basestation.nrbasestation import NRBaseStation
 from wns2.basestation.dronebasestation import DroneBaseStation
 from wns2.basestation.satellitebasestation import SatelliteBaseStation
 from wns2.userequipment.userequipment import UserEquipment
+from wns2.userequipment.multipath_userequipment import MultiPathUserEquipment
 from wns2.environment.environment import Environment
 from wns2.renderer.renderer import CustomRenderer
 import numpy.random as random
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(level=logging.DEBUG)
+logger.setLevel(level=logging.INFO)
 
 
 x_lim = 1000
 y_lim = 1000
 env = Environment(x_lim, y_lim, renderer = CustomRenderer())
 
-for i in range(0, 50):
+for i in range(0, 15):
     pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
-    env.add_user(UserEquipment(env, i, 25, pos, speed = 10, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
+    env.add_user(MultiPathUserEquipment(env, i, 25, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
 
 bs_parm =[{"pos": (500, 500, 30),
     "freq": 800,

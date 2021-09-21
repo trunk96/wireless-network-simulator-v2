@@ -164,9 +164,9 @@ class MultiPathUserEquipment:
             return list(self.bs_data_rate_allocation.keys())
 
     def advertise_connection(self):
-        if self.queue > 0:
+        if self.queue > 0 or self.data_generation_status:
             # we have something to send, so please send it
-            self.env.advertise_connection(self.ue_id)            
+            self.env.advertise_connection(self.ue_id)
         return
 
     def update_queue(self):
@@ -203,12 +203,16 @@ class MultiPathUserEquipment:
         if self.data_generation_status:
             return self.input_data_rate
         return 0
+    
+    def get_queue(self):
+        return self.queue
 
     def step(self):
         self.update_queue()
         self.move()
         self.advertise_connection()
         self.generate_input_data_rate()
+        self.output_data_rate.clear()
         return
     
     def connect_bs(self, bs_list):
@@ -248,7 +252,7 @@ class MultiPathUserEquipment:
                 logging.info("UE %s connected to BS %s with data rate %s", self.ue_id, bs.get_id(), actual_data_rate) 
             else:
                 current_bs = self.env.bs_by_id(bs)
-                actual_data_rate = current_bs.update_connection(self.ue_id, self.output_data_rate[bs.get_id()], rsrp)
+                actual_data_rate = current_bs.update_connection(self.ue_id, self.output_data_rate[current_bs.get_id()], rsrp)
                 logging.info("UE %s updated to BS %s with data rate %s --> %s", self.ue_id, current_bs.get_id(), self.bs_data_rate_allocation[current_bs.get_id()], actual_data_rate)
                 self.bs_data_rate_allocation[current_bs.get_id()] = actual_data_rate
         return
