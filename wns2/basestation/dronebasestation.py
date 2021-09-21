@@ -10,9 +10,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 class DroneBaseStation(NRBaseStation):   
     def __init__(self, env, bs_id, position, carrier_frequency, total_bandwidth, numerology, max_data_rate = None, antenna_power = 20, antenna_gain = 16, feeder_loss = 3, pathloss = None):
+        super().__init__(env, bs_id, position, carrier_frequency, total_bandwidth, numerology, max_data_rate = None, antenna_power = 20, antenna_gain = 16, feeder_loss = 3, pathloss = None)
         self.theta_k = 0
         self.bs_type = "drone"
-        return super().__init__(env, bs_id, position, carrier_frequency, total_bandwidth, numerology, max_data_rate = None, antenna_power = 20, antenna_gain = 16, feeder_loss = 3, pathloss = None)
+        return
 
     def move(self, destination, speed):
         logging.debug("Destination %s %s %s" %(destination[0], destination[1], destination[2]))
