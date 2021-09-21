@@ -16,7 +16,7 @@ x_lim = 1000
 y_lim = 1000
 env = Environment(x_lim, y_lim, renderer = CustomRenderer())
 
-for i in range(0, 15):
+for i in range(0, 50):
     pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
     env.add_user(MultiPathUserEquipment(env, i, 25, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
 
