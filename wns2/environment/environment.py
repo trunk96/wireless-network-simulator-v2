@@ -4,7 +4,7 @@ import matplotlib.cm as cm
 import matplotlib.gridspec as gridspec
 import numpy as np
 import wns2.environment.util as util
-MIN_RSRP = -140
+MIN_RSRP = -70 #-140
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
@@ -61,6 +61,8 @@ class Environment:
         # call here the optimizator, taking the w from users (with data_generation_status and input_data_rate)
         # set the desired data rate for all the users, connecting to the BSs
         # move the drone AP according to the weighted average of the positions of the UEs connected to
+        for i in range(len(self.ue_list)):
+            self.ue_by_id(i).disconnect_all()
         N = len(self.connection_advertisement)
         M = len(self.bs_list)
         q = np.zeros(N)
@@ -78,7 +80,7 @@ class Environment:
             ue = self.ue_by_id(self.connection_advertisement[i])
             connection_list = []
             for bs in range(M):
-                if u_final[i, bs] > 0:
+                if u_final[i, bs] > 0 and P[i, bs] == 1:
                     ue.output_data_rate[bs] = u_final[i, bs]
                     connection_list.append(bs)
             ue.connect_bs(connection_list)

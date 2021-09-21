@@ -257,10 +257,16 @@ class MultiPathUserEquipment:
                 self.bs_data_rate_allocation[current_bs.get_id()] = actual_data_rate
         return
 
-    def disconnect(self):
-        current_bs = self.get_current_bs()
-        self.env.bs_by_id(current_bs).disconnect(self.ue_id)
-        del self.bs_data_rate_allocation[current_bs]
+    def disconnect(self, bs):
+        if bs in self.get_current_bs():
+            self.env.bs_by_id(bs).disconnect(self.ue_id)
+            del self.bs_data_rate_allocation[bs]
+
+    def disconnect_all(self):
+        bs_list = self.get_current_bs()
+        if bs_list != None:
+            for bs in bs_list:
+                self.disconnect(bs)
     
     def requested_disconnect(self):
         # this is called if the env or the BS requested a disconnection

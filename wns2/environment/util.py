@@ -29,7 +29,7 @@ def obj_rule(m):
         for k in m.M:
             if k>j:
                 load_balancing += (sum(m.u_k[i,j] for i in m.N) - sum(m.u_k[i,k] for i in m.N))**2
-    queue_empty = sum((m.q[i] + m.T_s*(m.w[i] - sum(m.u_k[i,j] for j in m.M)))**2 for i in m.N)
+    queue_empty = sum((m.q[i] + m.T_s*(m.w[i] - sum(m.u_k[i,j] for j in m.M))) for i in m.N)
     return load_balancing + queue_empty
 
 def output_datarate_optimization_PYOMO(q, w, N, M, P, T_s, U_max=1000, Q_max=1, tol=1e-7):
@@ -38,7 +38,7 @@ def output_datarate_optimization_PYOMO(q, w, N, M, P, T_s, U_max=1000, Q_max=1, 
     m = pyo.ConcreteModel()
     m.N = pyo.RangeSet(0, N-1)
     m.M = pyo.RangeSet(0, M-1)
-    m.q = pyo.Param(m.N, initialize = {i: q[i] for i in m.N}, within = pyo.NonNegativeReals)
+    m.q = pyo.Param(m.N, initialize = {i: q[i] for i in m.N}, within = pyo.Reals)
     m.w = pyo.Param(m.N, initialize = {i: w[i] for i in m.N}, within = pyo.NonNegativeReals)
     m.P = pyo.Param(m.N, m.M, initialize = {(i,j): P[i][j] for j in m.M for i in m.N}, within = pyo.NonNegativeReals)
     m.T_s = pyo.Param(initialize = T_s, within = pyo.NonNegativeReals)
