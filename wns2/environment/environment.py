@@ -100,7 +100,7 @@ class Environment:
                     x_ue.append(pos[0])
                     y_ue.append(pos[1])
             bs = self.bs_by_id(drone_ap)
-            u_0 = 3 # weight of the current position of the drone
+            u_0 = 0 # weight of the current position of the drone
             x_drone = bs.get_position()[0]
             y_drone = bs.get_position()[1]
             z_drone = bs.get_position()[2]

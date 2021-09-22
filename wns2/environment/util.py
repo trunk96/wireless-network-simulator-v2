@@ -105,7 +105,7 @@ def output_datarate_optimization_GEKKO(q, w, N, M, P, T_s, U_max=1000, Q_max=1, 
     
     #Load balancing
        
-    m.Obj(sum([(sum(u_k[:,i])-sum(u_k[:,j])) for i in range(M) for j in range(M)]) + 100*sum([(q_k[i] + T_s*(w_k[i] - sum(u_k[i,:]))) for i in range(N)]))                                                
+    m.Obj(sum([(sum(u_k[:,i])-sum(u_k[:,j])) for i in range(M-1) for j in range(i+1,M)]) + 100*sum([(q_k[i] + T_s*(w_k[i] - sum(u_k[i,:]))) for i in range(N)]))                                                
     m.solve(disp=False)
     u_final = np.zeros((N,M)) 
     for i in range(N):
@@ -119,7 +119,8 @@ def output_datarate_optimization(q, w, N, M, P, T_s, U_max=1000, Q_max=1, tol=1e
     return output_datarate_optimization_PYOMO(q, w, N, M, P, T_s, U_max=1000, Q_max=1, tol=1e-7)
 
 def build_drone_pos_ref(u, x, y, u_0, x_0, y_0):
-    
+    if u_0 + sum(u) == 0:
+        return [x_0, y_0]
     ref_x = (u_0*x_0 + np.dot(u,x))/(u_0 + sum(u))
     ref_y = (np.dot(u,y) + u_0*y_0)/(u_0 + sum(u))
     droneRef = [ref_x,ref_y]
