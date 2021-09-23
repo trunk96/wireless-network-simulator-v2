@@ -142,3 +142,6 @@ class SatelliteBaseStation(BaseStation):
     
     def get_usage_ratio(self):
         return self.frame_utilization / self.total_symbols
+    
+    def get_allocated_data_rate(self):
+        return self.allocated_bitrate

@@ -143,3 +143,6 @@ class LTEBaseStation(BaseStation):
         
         self.load_history.append(self.get_usage_ratio())
         self.data_rate_history.append(self.allocated_data_rate)
+    
+    def get_allocated_data_rate(self):
+        return self.allocated_data_rate

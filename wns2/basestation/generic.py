@@ -32,3 +32,6 @@ class BaseStation:
     
     def step(self):
         return NotImplementedError
+    
+    def get_allocated_data_rate(self):
+        return NotImplementedError

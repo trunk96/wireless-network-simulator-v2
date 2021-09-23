@@ -1,4 +1,5 @@
 import logging
+from wns2.userequipment.multipath_userequipment import MultiPathUserEquipment
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.gridspec as gridspec
@@ -78,7 +79,7 @@ class Environment:
             rsrp = ue.measure_rsrp()
             for bs in rsrp:
                 P[i, bs] = 1
-        u_final = util.output_datarate_optimization(q, w, N, M, P, self.sampling_time)
+        u_final = util.output_datarate_optimization(q, w, N, M, P, self.sampling_time, Q_max = MultiPathUserEquipment.MAX_QUEUE)
         # set the desired data rate for all the users, connecting to the BSs
         for i in range(N):
             ue = self.ue_by_id(self.connection_advertisement[i])

@@ -17,11 +17,10 @@ class DroneBaseStation(NRBaseStation):
         self.last_error = [0,0,0]
         return
 
-    def move_PID(self, destination, speed, k_p = 10, k_i = 0, k_d = 0):
+    def move_PID(self, destination, speed, k_p = 1, k_i = 0, k_d = 0):
         e_x = destination[0] - self.position[0]
         e_y = destination[1] - self.position[1]
         e_z = destination[2] - self.position[2]
-        print("Drone destination: %s" %(destination[0]))
         max_speed = speed * self.env.get_sampling_time()
         self.integral_error[0] += e_x
         self.integral_error[1] += e_y
@@ -32,7 +31,6 @@ class DroneBaseStation(NRBaseStation):
         self.last_error = [e_x, e_y, e_z]
         mod_v = v_ref_x**2 +v_ref_y**2 + v_ref_z**2
         if  mod_v > speed **2:
-            print("V max reached, scale the module")
             alpha = speed / math.sqrt(mod_v)
             v_ref_x *= alpha
             v_ref_y *= alpha
@@ -40,7 +38,6 @@ class DroneBaseStation(NRBaseStation):
         new_x = self.position[0] + v_ref_x
         new_y = self.position[1] + v_ref_y
         new_z = self.position[2] + v_ref_z
-        print("Drone moved to (%s %s %s)" %(new_x, new_y, new_z))
         self.position = (new_x, new_y, new_z)
         return
 

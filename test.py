@@ -6,6 +6,7 @@ from wns2.userequipment.multipath_userequipment import MultiPathUserEquipment
 from wns2.environment.environment import Environment
 import wns2.environment.environment
 from wns2.renderer.renderer import CustomRenderer
+from wns2.renderer.renderer_json import JSONRendererARIES
 import numpy.random as random
 import logging
 
@@ -15,7 +16,7 @@ logger.setLevel(level=logging.INFO)
 
 x_lim = 1000
 y_lim = 1000
-env = Environment(x_lim, y_lim, renderer = CustomRenderer())
+env = Environment(x_lim, y_lim, renderer = CSVRendererARIES())
 wns2.environment.environment.MIN_RSRP = -75
 
 for i in range(0, 50):
@@ -97,7 +98,7 @@ for i in range(1, len(bs_parm)):
 env.add_base_station(DroneBaseStation(env, 0, bs_parm[0]["pos"], bs_parm[0]["freq"], bs_parm[0]["bandwidth"], bs_parm[0]["numerology"], bs_parm[0]["max_bitrate"], bs_parm[0]["power"], bs_parm[0]["gain"], bs_parm[0]["loss"]))
 env.add_base_station(SatelliteBaseStation(env, i+1, (250, 500, 35786000)))
 
-counter = 1000
+counter = 100
 while counter != 0:
     env.render()
     env.step()
