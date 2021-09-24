@@ -13,6 +13,7 @@ class MultiPathUserEquipment:
     def __init__(self, env, ue_id, initial_data_rate, starting_position, speed = 0, direction = 0, random = False, _lambda_c = None, _lambda_d = None):
         self.ue_id = ue_id
         self.queue = 0
+        self.queue_out = False
         self.input_data_rate = initial_data_rate
         self.current_position = starting_position
         self.env = env
@@ -178,8 +179,10 @@ class MultiPathUserEquipment:
             self.queue += self.sampling_time * (self.input_data_rate - total_output_data_rate)
         else:
             self.queue += self.sampling_time * total_output_data_rate
-        if self.queue > MultiPathUserEquipment.MAX_QUEUE:
+        self.queue_out = False
+        if self.queue > MultiPathUserEquipment.MAX_QUEUE+0.1:
             self.queue = MultiPathUserEquipment.MAX_QUEUE
+            self.queue_out = True
     
     def generate_input_data_rate(self):
         if self.time_to_wait == None:

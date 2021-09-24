@@ -16,7 +16,8 @@ logger.setLevel(level=logging.INFO)
 
 x_lim = 1000
 y_lim = 1000
-env = Environment(x_lim, y_lim, renderer = CSVRendererARIES())
+env = Environment(x_lim, y_lim, renderer = JSONRendererARIES())
+#env = Environment(x_lim, y_lim, renderer = CustomRenderer())
 wns2.environment.environment.MIN_RSRP = -75
 
 for i in range(0, 50):
