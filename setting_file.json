@@ -1,0 +1,67 @@
+{
+    "bs":[
+        {"pos": [500, 500, 30],
+        "freq": 800,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 20,
+        "max_bitrate": 1000},
+        
+        {"pos": [250, 300, 30],
+        "freq": 1700,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 40,
+        "max_bitrate": 1000},
+    
+
+        {"pos": [500, 125, 30],
+        "freq": 1900,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 40,
+        "max_bitrate": 1000},
+    
+        {"pos": [750, 300, 30],
+        "freq": 2000,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 25,
+        "max_bitrate": 1000},
+        
+        {"pos": [750, 700, 30],
+        "freq": 1700,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 40,
+        "max_bitrate": 1000},
+    
+        {"pos": [500, 875, 30],
+        "freq": 1900,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 40,
+        "max_bitrate": 1000},
+    
+        {"pos": [250, 700, 30],
+        "freq": 2000,
+        "numerology": 1, 
+        "power": 20,
+        "gain": 16,
+        "loss": 3,
+        "bandwidth": 25,
+        "max_bitrate": 1000}
+    ]
+}
