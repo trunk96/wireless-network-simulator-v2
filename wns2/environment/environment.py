@@ -62,7 +62,7 @@ class Environment:
             self.ue_list[ue].step()
         for bs in self.bs_list:
             self.bs_list[bs].step()
-               
+        '''       
         # disconnect all the users, in order to reconnect them to the right AP and with the right datarate
         for i in range(len(self.ue_list)):
             self.ue_by_id(i).disconnect_all()
@@ -109,6 +109,7 @@ class Environment:
             new_drone_pos = (new_drone_pos[0], new_drone_pos[1], z_drone)
             #print("OLD DRONE POSITION: (%s, %s) ---> NEW DRONE POSITION: (%s, %s)" %(x_drone, y_drone, new_drone_pos[0], new_drone_pos[1]))
             bs.move(new_drone_pos, speed=15)
+        '''
         return            
 
     def render(self):
