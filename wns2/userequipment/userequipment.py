@@ -208,6 +208,7 @@ class UserEquipment:
         return self.connect_(best_bs, rsrp)
 
     def connect_(self, bs, rsrp):
+        actual_data_rate = None
         if len(self.bs_data_rate_allocation) == 0:
             # no BS connected
             bs = self.env.bs_by_id(bs)
@@ -227,17 +228,20 @@ class UserEquipment:
                 actual_data_rate = current_bs.update_connection(self.ue_id, self.data_rate, rsrp)
                 logging.info("UE %s updated to BS %s with data rate %s --> %s", self.ue_id, current_bs.get_id(), self.bs_data_rate_allocation[current_bs.get_id()], actual_data_rate)
                 self.bs_data_rate_allocation[current_bs.get_id()] = actual_data_rate
-        return
+        return actual_data_rate
 
     def disconnect(self):
         current_bs = self.get_current_bs()
-        self.env.bs_by_id(current_bs).disconnect(self.ue_id)
-        del self.bs_data_rate_allocation[current_bs]
+        if current_bs != None:
+            self.env.bs_by_id(current_bs).disconnect(self.ue_id) 
+            del self.bs_data_rate_allocation[current_bs]
+            current_bs = None
     
     def requested_disconnect(self):
         # this is called if the env or the BS requested a disconnection
         current_bs = self.get_current_bs()
         del self.bs_data_rate_allocation[current_bs]
+        current_bs = None
 
 
         

@@ -1,4 +1,3 @@
-from multiprocessing import connection
 import gym
 from gym import spaces
 from wns2.basestation.nrbasestation import NRBaseStation
