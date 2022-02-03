@@ -31,7 +31,7 @@ class LexicographicQTableLearner:
         self.qtable_constraints = np.zeros((constraint_size, state_size, action_size))
         self.qtable = np.zeros((state_size, action_size))
         self.avg_time = 0
-        self.steps_per_episode = 100
+        self.steps_per_episode = 1000
 
     def _clear_screen(self):
         """Clears the terminal screen according to OS.
@@ -68,7 +68,7 @@ class LexicographicQTableLearner:
         print(f'Q - Table Constraints Shape:\t{self.qtable_constraints.shape}')
         print(f'Episode Number :\t{episode}/{total_episodes}')
         print(f'Episode Epsilon:\t{epsilon}')
-        print(f'Episode Step   :\t{step+1}/100')
+        print(f'Episode Step   :\t{step+1}/{self.steps_per_episode}')
         print(f'Episode Action :\t{action}')
         print(f'Episode Reward :\t{reward}')
         print(f'Episode Done ? :\t{"Yes" if done else "No"}')
@@ -108,7 +108,7 @@ class LexicographicQTableLearner:
         print(f'Current Step Time    :\t{np.round(step_t,4)} secs')
         sleep(RENDER_REFRESH_TIME if render else NON_RENDER_REFRESH_TIME)
 
-    def train(self, train_episodes=10000, lr=0.7, gamma=0.6, render=False):
+    def train(self, train_episodes=10000, lr_init=0.7, gamma=0.9, render=False):
         """ Calling this method will start the training process.
 
         Parameters: 
@@ -121,7 +121,7 @@ class LexicographicQTableLearner:
         """
         (epsilon, max_epsilon, min_epsilon, decay_rate) = (1.0, 1.0, 0.01, 0.01)
         done_count = 0
-
+        lr = lr_init
         t_episode = 0
         for episode in range(train_episodes):
             t_s_episode = time()
@@ -129,6 +129,7 @@ class LexicographicQTableLearner:
             curr_state = self.env.reset()
             curr_step = 0
             episode_done = False
+            lr = lr_init/(episode+1)
             for curr_step in range(self.steps_per_episode):
                 t_s_step = time()
                 # Exploration Exploitation Tradeoff for the current step.
@@ -137,6 +138,8 @@ class LexicographicQTableLearner:
                 c = 0
                 constraint_violated = False
                 for c in range(len(self.constraints)):
+                    #print(curr_state)
+                    #print(self.qtable_constraints[c][curr_state, :])
                     if max(self.qtable_constraints[c][curr_state, :]) > self.constraints[c]:
                         constraint_violated = True
                         break
@@ -205,7 +208,7 @@ class LexicographicQTableLearner:
         # Printing Logs
         print(f'Model Name     :\t{self.model_name}')
         print(f'Episode Number :\t{episode}/{total_episodes}')
-        print(f'Episode Step   :\t{step+1}/100')
+        print(f'Episode Step   :\t{step+1}/{self.steps_per_episode}')
         print(f'Episode Reward :\t{episode_reward}')
         print(f'Step Reward    :\t{step_reward}')
         print(f'Episode Done ? :\t{"Yes" if done else "No"}')
