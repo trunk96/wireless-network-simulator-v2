@@ -16,7 +16,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 class CACGymEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     QUANTIZATION = 5 #0%, 20%, 40%, 60%, 80% 100%
-    CLASSES_OF_SERVICE = 3
 
     def init_env(self, x_lim, y_lim, terr_parm, sat_parm, n_ue):
         self.env = Environment(x_lim, y_lim, renderer = CustomRenderer())
@@ -37,13 +36,13 @@ class CACGymEnv(gym.Env):
             self.n_ap = len(terr_parm)+len(sat_parm)
             self.action_space = spaces.Discrete(self.n_ap+1)
             #self.observation_space = spaces.MultiDiscrete([self.CLASSES_OF_SERVICE]+[self.QUANTIZATION+1 for _ in range(self.n_ap)])
-            self.observation_space = spaces.Discrete(self.CLASSES_OF_SERVICE*((self.QUANTIZATION+1)**self.n_ap))
             self.n_ue = len(class_list)
             self.x_lim = x_lim
             self.y_lim = y_lim
             self.class_list = class_list
             class_set = set(class_list)
             self.number_of_classes = len(class_set)
+            self.observation_space = spaces.Discrete(self.number_of_classes*((self.QUANTIZATION+1)**self.n_ap))
             self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue)
     
     def observe(self, ue_id):
@@ -56,15 +55,14 @@ class CACGymEnv(gym.Env):
                     bs_obs.append(counter)
                     break
                 counter += 1
-        observation_arr = np.array([self.class_list[ue_id]]+bs_obs)
+        observation_arr = np.array(bs_obs + [self.class_list[ue_id]])
         observation = 0
-        counter = 0
-        for elem in observation_arr:
-            if counter == 0:
-                observation = elem * (self.CLASSES_OF_SERVICE**0)
+        # convert observation_arr (represented as mixed-radix number) to decimal number
+        for i in range(len(observation_arr)):
+            if i == len(observation_arr)-1:
+                observation = observation * self.number_of_classes + observation_arr[i]
             else:
-                observation += elem * ((self.QUANTIZATION+1)**counter)
-            counter += 1
+                observation = observation * (self.QUANTIZATION+1) + observation_arr[i]
         return observation
 
     def step(self, action):
