@@ -61,7 +61,7 @@ class CACGymEnv(gym.Env):
         counter = 0
         for elem in observation_arr:
             if counter == 0:
-                observation = elem * self.CLASSES_OF_SERVICE
+                observation = elem * (self.CLASSES_OF_SERVICE**0)
             else:
                 observation += elem * ((self.QUANTIZATION+1)**counter)
             counter += 1
@@ -93,23 +93,24 @@ class CACGymEnv(gym.Env):
                 info[i] = 0
         reward = np.sum(info)
         
-        # make the env go 1 step forward
-        self.env.step()
-
         # select next ue that will be scheduled (if all the UEs are scheduled yet, fast-forward steps in the environment)
         if len(self.advertised_connections) > 0:
-            for ue_id in range(self.n_ue):
-                self.env.ue_by_id(ue_id).last_time -= 1
+            '''for ue_id in range(self.n_ue):
+                self.env.ue_by_id(ue_id).last_time -= 1'''
+            # make the env go 1 substep forward
+            self.env.step(substep = True)
         else:
-            self.env.step()
-            self.advertised_connections = copy.deepcopy(self.env.connection_advertisement)
             while len(self.advertised_connections) == 0:
                 self.env.step()
                 self.advertised_connections = copy.deepcopy(self.env.connection_advertisement)
+                # if a UE is already connected to an AP, skip it and focus only on the unconnected UEs
+                for ue_id in self.advertised_connections:
+                    if self.env.ue_by_id(ue_id).get_current_bs() != None:
+                        self.advertised_connections.remove(ue_id)
         
         next_ue_id = random.choice(self.advertised_connections)
         self.advertised_connections.remove(next_ue_id)
-        next_ue = self.env.ue_by_id(next_ue_id)
+        '''next_ue = self.env.ue_by_id(next_ue_id)
         # if next_ue is already connected to an AP, skip it and focus only on the unconnected UEs
         while next_ue.get_current_bs() != None:
             while len(self.advertised_connections) == 0:
@@ -117,7 +118,7 @@ class CACGymEnv(gym.Env):
                 self.advertised_connections = copy.deepcopy(self.env.connection_advertisement)
             next_ue_id = random.choice(self.advertised_connections)
             self.advertised_connections.remove(next_ue_id)
-            next_ue = self.env.ue_by_id(next_ue_id)
+            next_ue = self.env.ue_by_id(next_ue_id)'''
 
         
         self.current_ue_id = next_ue_id
@@ -137,8 +138,6 @@ class CACGymEnv(gym.Env):
         ue_id = random.choice(self.advertised_connections)
         self.current_ue_id = ue_id
         # go back 1 time instant, so at the next step() the connection_advertisement list will not change
-        for _ue_id in range(self.n_ue):
-            self.env.ue_by_id(_ue_id).last_time -= 1
         observation = self.observe(ue_id)
         self.advertised_connections.remove(ue_id)
         return observation

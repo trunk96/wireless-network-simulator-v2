@@ -184,15 +184,18 @@ class UserEquipment:
                 # ENABLE THIS LINE IF WE WANT TO RECONNECT EACH TIMESTEP
                 self.env.advertise_connection(self.ue_id)
     
-    def step(self):
-        self.move()
-        self.advertise_connection()
+    def step(self, substep = False):
+        if not substep:
+            self.move()
+            self.advertise_connection()
         return
     
     def connect_bs(self, bs):
         rsrp = self.measure_rsrp()
         if len(rsrp) == 0:
-            return
+            return None
+        if bs not in rsrp:
+            return None
         return self.connect_(bs, rsrp)
 
     def connect_max_rsrp(self):

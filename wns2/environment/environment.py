@@ -56,10 +56,14 @@ class Environment:
         self.connection_advertisement.append(ue_id)
         return
         
-    def step(self): 
-        self.connection_advertisement.clear()
+    def step(self, substep = False): 
+        # substep indicates if it is just a substep or it is a complete step
+        # if substep, then the connection advertisement list should not be updated
+        # nor the UEs should update their internal timers to decide if it is time to connect/disconnect
+        if not substep:
+            self.connection_advertisement.clear()
         for ue in self.ue_list:
-            self.ue_list[ue].step()
+            self.ue_list[ue].step(substep)
         for bs in self.bs_list:
             self.bs_list[bs].step()
         '''       

@@ -11,7 +11,7 @@ logger.setLevel(level=logging.INFO)
 
 x_lim = 1000
 y_lim = 1000
-n_ue = 50
+n_ue = 200
 class_list = []
 for i in range(n_ue):
     class_list.append(i % 3)
@@ -92,16 +92,18 @@ env = CACGymEnv(x_lim, y_lim, class_list, terr_parm, sat_parm)
 learner = lexicographicqlearning.LexicographicQTableLearner(env, "CAC_Env", [0.075, 0.075, 0.075])
 
 def exit_handler(signum, frame):
-    res = input("Ctrl-c was pressed, do you want to save your current model? Y/n ")
+    res = input("Ctrl-c was pressed, do you want to save your current model? y/n ")
     if res == "y":
         global learner
         learner.save_model()
         exit(1)
+    else: 
+        exit(1)
 
 signal.signal(signal.SIGINT, exit_handler)
 
-learner.train(train_episodes=500)
-learner.test()
+learner.train(train_episodes=350)
+learner.test(test_episodes=100)
 learner.save_model()
 
 
