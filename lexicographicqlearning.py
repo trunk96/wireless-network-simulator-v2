@@ -245,7 +245,8 @@ class LexicographicQTableLearner:
             self.env.render()
             sleep(RENDER_REFRESH_TIME)
         else:
-            sleep(NON_RENDER_REFRESH_TIME)
+            #sleep(NON_RENDER_REFRESH_TIME)
+            pass
 
     def test(self, test_episodes=200, render=False):
         """ Testing method to know our environment performance.
