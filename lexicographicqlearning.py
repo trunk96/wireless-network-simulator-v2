@@ -3,6 +3,7 @@ import platform
 from time import sleep, time
 import numpy as np
 import unicurses
+import matplotlib.pyplot as plt
 
 RENDER_REFRESH_TIME = 0.02
 NON_RENDER_REFRESH_TIME = 0.008
@@ -38,6 +39,7 @@ class LexicographicQTableLearner:
         self.qtable = np.zeros((state_size, action_size))
         self.avg_time = 0
         self.steps_per_episode = 1000
+    
 
     def _clear_screen(self):
         """Clears the terminal screen according to OS.
@@ -132,6 +134,7 @@ class LexicographicQTableLearner:
         done_count = 0
         lr = lr_init
         t_episode = 0
+        reward_plot = np.zeros(((len(self.constraints)+1), train_episodes))
         for episode in range(train_episodes):
             t_s_episode = time()
 
@@ -174,9 +177,12 @@ class LexicographicQTableLearner:
                 # Updating all the QTables using Bellman Equation
                 self.qtable[curr_state, curr_action] = \
                     (1-lr)*self.qtable[curr_state, curr_action] + lr*(reward + gamma * min(self.qtable[new_state, :]))
+                reward_plot[0][episode] += reward
                 for c in range(len(self.constraints)):
                     self.qtable_constraints[c][curr_state, curr_action] = \
                         (1-lr)*self.qtable_constraints[c][curr_state, curr_action] + lr*(info[c] + gamma * min(self.qtable_constraints[c][new_state, :]))
+                    reward_plot[c+1][episode] += info[c]
+                
                 # Environment state change
                 curr_state = new_state
 
@@ -195,6 +201,7 @@ class LexicographicQTableLearner:
             # Episode Time Calculation
             t_episode = time()-t_s_episode
         self.env.close()
+        self.training_reward_plot = reward_plot
 
     def _render_test_logs(self, episode, total_episodes, step, episode_reward, step_reward, done, done_count):
         """Rendering text logs on console window.
@@ -326,8 +333,12 @@ class LexicographicQTableLearner:
         path = os.path.join(model_path, model_name)
         path_constraints = [os.path.join(model_path, model_name+"_constraint_"+str(i)) for i in range(len(self.constraints))]
         np.save(path, self.qtable)
+        plt.plot(self.training_reward_plot[0])
+        plt.savefig(path+".png")
         for i in range(len(path_constraints)):
             np.save(path_constraints[i], self.qtable_constraints[i])
+            plt.plot(self.training_reward_plot[i+1])
+            plt.savefig(path_constraints[i]+".png")
         unicurses.addstr(f'Model saved at location :\t{path}\n')
         sleep(3)
 
