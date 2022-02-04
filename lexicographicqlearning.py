@@ -2,9 +2,15 @@ import os
 import platform
 from time import sleep, time
 import numpy as np
+import unicurses
 
 RENDER_REFRESH_TIME = 0.02
 NON_RENDER_REFRESH_TIME = 0.008
+
+
+stdscr = unicurses.initscr()
+unicurses.noecho()
+unicurses.cbreak()
 
 
 class LexicographicQTableLearner:
@@ -60,19 +66,21 @@ class LexicographicQTableLearner:
         """
 
         # Clear Screen
-        self._clear_screen()
+        #self._clear_screen()
+        unicurses.clear()
 
         # Printing Logs
-        print(f'Model Name     :\t{self.model_name}')
-        print(f'Q - Table Shape:\t{self.qtable.shape}')
-        print(f'Q - Table Constraints Shape:\t{self.qtable_constraints.shape}')
-        print(f'Episode Number :\t{episode}/{total_episodes}')
-        print(f'Episode Epsilon:\t{epsilon}')
-        print(f'Episode Step   :\t{step+1}/{self.steps_per_episode}')
-        print(f'Episode Action :\t{action}')
-        print(f'Episode Reward :\t{reward}')
-        print(f'Episode Done ? :\t{"Yes" if done else "No"}')
-        print(f'Done Count     :\t{done_count}')
+        unicurses.addstr(f'Model Name     :\t{self.model_name}\n')
+        unicurses.addstr(f'Q - Table Shape:\t{self.qtable.shape}\n')
+        unicurses.addstr(f'Q - Table Constraints Shape:\t{self.qtable_constraints.shape}\n')
+        unicurses.addstr(f'Episode Number :\t{episode}/{total_episodes}\n')
+        unicurses.addstr(f'Episode Epsilon:\t{epsilon}\n')
+        unicurses.addstr(f'Episode Step   :\t{step+1}/{self.steps_per_episode}\n')
+        unicurses.addstr(f'Episode Action :\t{action}\n')
+        unicurses.addstr(f'Episode Reward :\t{reward}\n')
+        unicurses.addstr(f'Episode Done ? :\t{"Yes" if done else "No"}\n')
+        unicurses.addstr(f'Done Count     :\t{done_count}\n')
+        unicurses.refresh()
 
     def _render_train_env(self):
         """Renders the environment."""
@@ -100,13 +108,14 @@ class LexicographicQTableLearner:
 
         time_left = int(self.avg_time*episode_left)
         time_left = (time_left//60, time_left % 60)
-        print()
-        print(
-            f'Time Left            :\t{time_left[0]} mins  {time_left[1]} secs')
-        print(f'Average Episode Time :\t{np.round(self.avg_time,4)} secs')
-        print(f'Current Episode Time :\t{np.round(episode_t,4)} secs')
-        print(f'Current Step Time    :\t{np.round(step_t,4)} secs')
-        sleep(RENDER_REFRESH_TIME if render else NON_RENDER_REFRESH_TIME)
+        #print()
+        unicurses.addstr(
+            f'Time Left            :\t{time_left[0]} mins  {time_left[1]} secs\n')
+        unicurses.addstr(f'Average Episode Time :\t{np.round(self.avg_time,4)} secs\n')
+        unicurses.addstr(f'Current Episode Time :\t{np.round(episode_t,4)} secs\n')
+        unicurses.addstr(f'Current Step Time    :\t{np.round(step_t,4)} secs\n')
+        unicurses.refresh()
+        #sleep(RENDER_REFRESH_TIME if render else NON_RENDER_REFRESH_TIME)
 
     def train(self, train_episodes=10000, lr_init=0.7, gamma=0.9, render=False):
         """ Calling this method will start the training process.
@@ -203,16 +212,18 @@ class LexicographicQTableLearner:
         """
 
         # Clear Screen
-        self._clear_screen()
+        #self._clear_screen()
+        unicurses.clear()
 
         # Printing Logs
-        print(f'Model Name     :\t{self.model_name}')
-        print(f'Episode Number :\t{episode}/{total_episodes}')
-        print(f'Episode Step   :\t{step+1}/{self.steps_per_episode}')
-        print(f'Episode Reward :\t{episode_reward}')
-        print(f'Step Reward    :\t{step_reward}')
-        print(f'Episode Done ? :\t{"Yes" if done else "No"}')
-        print(f'Done Count     :\t{done_count}')
+        unicurses.addstr(f'Model Name     :\t{self.model_name}\n')
+        unicurses.addstr(f'Episode Number :\t{episode}/{total_episodes}\n')
+        unicurses.addstr(f'Episode Step   :\t{step+1}/{self.steps_per_episode}\n')
+        unicurses.addstr(f'Episode Reward :\t{episode_reward}\n')
+        unicurses.addstr(f'Step Reward    :\t{step_reward}\n')
+        unicurses.addstr(f'Episode Done ? :\t{"Yes" if done else "No"}\n')
+        unicurses.addstr(f'Done Count     :\t{done_count}\n')
+        unicurses.refresh()
 
     def _render_test_env(self, render):
         """Renders the environment
@@ -276,8 +287,10 @@ class LexicographicQTableLearner:
                     break
                 # Changing states for next step
                 state = new_state
+            if done_count == 0:
+                rewards.append(total_rewards)
         self.env.close()
-        print(f"\n\nScore over time: \t{sum(rewards)/test_episodes}")
+        unicurses.addstr(f"\n\nScore over time: \t{sum(rewards)/test_episodes}\n")
 
     def set_refresh_time(self, time, render):
         """ Sets the refresh time for render mode TRUE or FALSE.
@@ -315,10 +328,10 @@ class LexicographicQTableLearner:
         np.save(path, self.qtable)
         for i in range(len(path_constraints)):
             np.save(path_constraints[i], self.qtable_constraints[i])
-        print(f'Model saved at location :\t{path}')
+        unicurses.addstr(f'Model saved at location :\t{path}\n')
         sleep(3)
 
-    def load_model(self, model_name):
+    def load_model(self, model_name, path=""):
         """ Load the QTable from storage.
 
         Parameters:
@@ -326,18 +339,20 @@ class LexicographicQTableLearner:
 
         Returns: None
         """
-        if not os.path.isfile(model_name):
-            print(f'File not found for the location {model_name}')
+        path_complete = os.path.join(path, model_name+".npy")
+        if not os.path.isfile(path_complete):
+            unicurses.addstr(f'File not found for the location {path_complete}\n')
         else:
-            self.qtable = np.load(model_name)
-            print(f'Model loaded from location {model_name}')
-        path_constraints = [model_name+"_constraint_"+str(i) for i in range(len(self.constraints))]
+            self.qtable = np.load(path_complete)
+            unicurses.addstr(f'Model loaded from location {model_name}\n')
+        path_constraints = [model_name+"_constraint_"+str(i)+".npy" for i in range(len(self.constraints))]
         for i in range(len(path_constraints)):
-            if not os.path.isfile(path_constraints[i]):
-                print(f'File not found for the location {path_constraints[i]}')
+            path_complete = os.path.join(path, path_constraints[i])
+            if not os.path.isfile(path_complete):
+                unicurses.addstr(f'File not found for the location {path_complete}\n')
             else:
-                self.qtable_constraints[i] = np.load(path_constraints[i])
-                print(f'Model loaded from location {path_constraints[i]}')  
+                self.qtable_constraints[i] = np.load(path_complete)
+                unicurses.addstr(f'Model loaded from location {path_complete}\n')  
         sleep(3)
 
 

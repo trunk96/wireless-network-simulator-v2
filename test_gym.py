@@ -11,7 +11,7 @@ logger.setLevel(level=logging.INFO)
 
 x_lim = 1000
 y_lim = 1000
-n_ue = 200
+n_ue = 50
 class_list = []
 for i in range(n_ue):
     class_list.append(i % 3)
@@ -102,7 +102,7 @@ def exit_handler(signum, frame):
 
 signal.signal(signal.SIGINT, exit_handler)
 
-learner.train(train_episodes=350)
+learner.train(train_episodes=1000)
 learner.test(test_episodes=100)
 learner.save_model()
 
