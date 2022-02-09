@@ -16,6 +16,8 @@ class_list = []
 for i in range(n_ue):
     class_list.append(i % 3)
 
+quantization = 6
+
 terr_parm =[{"pos": (500, 500, 30),
     "freq": 800,
     "numerology": 1, 
@@ -88,8 +90,8 @@ terr_parm =[{"pos": (500, 500, 30),
     "max_bitrate": 1000}]
 
 sat_parm = [{"pos": (250, 500, 35786000)}]
-env = CACGymEnv(x_lim, y_lim, class_list, terr_parm, sat_parm)
-learner = lexicographicqlearning.LexicographicQTableLearner(env, "CAC_Env", [0.075, 0.075, 0.075])
+env = CACGymEnv(x_lim, y_lim, class_list, terr_parm, sat_parm, quantization=quantization)
+learner = lexicographicqlearning.LexicographicQTableLearner(env, "CAC_Env", [0.075, 0.10, 0.15])
 
 def exit_handler(signum, frame):
     res = input("Ctrl-c was pressed, do you want to save your current model? y/n ")
@@ -102,8 +104,8 @@ def exit_handler(signum, frame):
 
 signal.signal(signal.SIGINT, exit_handler)
 
-learner.train(train_episodes=1000)
-learner.test(test_episodes=100)
+learner.train(train_episodes=40000)
+#learner.test(test_episodes=100)
 learner.save_model()
 
 

@@ -130,7 +130,7 @@ class LexicographicQTableLearner:
 
         Returns: None
         """
-        (epsilon, max_epsilon, min_epsilon, decay_rate) = (1.0, 1.0, 0.01, 0.01)
+        (epsilon, max_epsilon, min_epsilon, decay_rate) = (1.0, 1.0, 0.01, 0.001)
         done_count = 0
         lr = lr_init
         t_episode = 0
@@ -334,12 +334,14 @@ class LexicographicQTableLearner:
         path = os.path.join(model_path, model_name)
         path_constraints = [os.path.join(model_path, model_name+"_constraint_"+str(i)) for i in range(len(self.constraints))]
         np.save(path, self.qtable)
-        plt.plot(self.training_reward_plot[0])
-        plt.savefig(path+".png")
+        np.save(path+"_reward", self.training_reward_plot[0])
+        # plt.plot(self.training_reward_plot[0])
+        # plt.savefig(path+".png")
         for i in range(len(path_constraints)):
             np.save(path_constraints[i], self.qtable_constraints[i])
-            plt.plot(self.training_reward_plot[i+1])
-            plt.savefig(path_constraints[i]+".png")
+            np.save(path_constraints[i]+"_reward", self.training_reward_plot[i+1])
+            # plt.plot(self.training_reward_plot[i+1])
+            # plt.savefig(path_constraints[i]+".png")
         unicurses.addstr(f'Model saved at location :\t{path}\n')
         sleep(3)
 

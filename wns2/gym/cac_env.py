@@ -22,7 +22,7 @@ class CACGymEnv(gym.Env):
         self.init_pos = []  # for reset method
         for i in range(0, n_ue):
             pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
-            self.env.add_user(UserEquipment(self.env, i, 25, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
+            self.env.add_user(UserEquipment(self.env, i, 30, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
             self.init_pos.append(pos)
         for i in range(len(terr_parm)):
             self.env.add_base_station(NRBaseStation(self.env, i, terr_parm[i]["pos"], terr_parm[i]["freq"], terr_parm[i]["bandwidth"], terr_parm[i]["numerology"], terr_parm[i]["max_bitrate"], terr_parm[i]["power"], terr_parm[i]["gain"], terr_parm[i]["loss"]))
@@ -30,8 +30,9 @@ class CACGymEnv(gym.Env):
             self.env.add_base_station(SatelliteBaseStation(self.env, len(terr_parm)+i, sat_parm[i]["pos"]))
         self.terr_parm = terr_parm
         self.sat_parm = sat_parm
+        
 
-    def __init__(self, x_lim, y_lim, class_list, terr_parm, sat_parm):
+    def __init__(self, x_lim, y_lim, class_list, terr_parm, sat_parm, quantization = QUANTIZATION):
             super(CACGymEnv, self).__init__()
             self.n_ap = len(terr_parm)+len(sat_parm)
             self.action_space = spaces.Discrete(self.n_ap+1)
@@ -39,18 +40,20 @@ class CACGymEnv(gym.Env):
             self.n_ue = len(class_list)
             self.x_lim = x_lim
             self.y_lim = y_lim
+            self.quantization = quantization
             self.class_list = class_list
             class_set = set(class_list)
             self.number_of_classes = len(class_set)
-            self.observation_space = spaces.Discrete(self.number_of_classes*((self.QUANTIZATION+1)**self.n_ap))
+            self.observation_space = spaces.Discrete(self.number_of_classes*((self.quantization+1)**self.n_ap))
             self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue)
+            
     
     def observe(self, ue_id):
         bs_obs = []
         for j in range(self.n_ap):
             l = self.env.bs_by_id(j).get_usage_ratio()
             counter = 0
-            for i in np.arange(0, 1, 1/self.QUANTIZATION):
+            for i in np.arange(0, 1, 1/self.quantization):
                 if l <= i:
                     bs_obs.append(counter)
                     break
@@ -62,7 +65,7 @@ class CACGymEnv(gym.Env):
             if i == len(observation_arr)-1:
                 observation = observation * self.number_of_classes + observation_arr[i]
             else:
-                observation = observation * (self.QUANTIZATION+1) + observation_arr[i]
+                observation = observation * (self.quantization+1) + observation_arr[i]
         return observation
 
     def step(self, action):
