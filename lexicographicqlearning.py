@@ -9,9 +9,9 @@ RENDER_REFRESH_TIME = 0.02
 NON_RENDER_REFRESH_TIME = 0.008
 
 
-stdscr = unicurses.initscr()
-unicurses.noecho()
-unicurses.cbreak()
+#stdscr = unicurses.initscr()
+#nicurses.noecho()
+#unicurses.cbreak()
 
 
 class LexicographicQTableLearner:
@@ -260,11 +260,13 @@ class LexicographicQTableLearner:
         self.env.reset()
         # Collecting the rewards over time.
         rewards = list()
+        constraint_rewards = list()
         done_count = 0
         for episode in range(test_episodes):
             state = self.env.reset()
             # Reward for current episode.
             total_rewards = 0
+            total_constraints_rewards = np.zeros(len(self.constraints))
             for _ in range(self.steps_per_episode):
                 # Selecting the best action from the appropriate QTable
                 c = 0
@@ -283,22 +285,27 @@ class LexicographicQTableLearner:
                 new_state, reward, done, info = self.env.step(action)
 
                 total_rewards += reward
+                for _ in range(len(info)):
+                    total_constraints_rewards[_] += info[_]
                 # Printing logs
-                self._render_test_logs(
-                    episode, test_episodes, _, total_rewards, reward, done, done_count)
+                #self._render_test_logs(
+                #    episode, test_episodes, _, total_rewards, reward, done, done_count)
                 # Render Environment
-                self._render_test_env(render)
+                #self._render_test_env(render)
 
                 if done:
                     rewards.append(total_rewards)
+                    constraint_rewards.append(total_constraints_rewards)
                     done_count += 1
                     break
                 # Changing states for next step
                 state = new_state
             if done_count == 0:
                 rewards.append(total_rewards)
+                constraint_rewards.append(total_constraints_rewards)
         self.env.close()
-        unicurses.addstr(f"\n\nScore over time: \t{sum(rewards)/test_episodes}\n")
+        #unicurses.addstr(f"\n\nScore over time: \t{sum(rewards)/test_episodes}\n")
+        return rewards, constraint_rewards
 
     def set_refresh_time(self, time, render):
         """ Sets the refresh time for render mode TRUE or FALSE.

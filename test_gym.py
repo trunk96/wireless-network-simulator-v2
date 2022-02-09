@@ -1,9 +1,13 @@
+from json import load
+
+from pkg_resources import load_entry_point
 from wns2.basestation.satellitebasestation import SatelliteBaseStation
 from wns2.gym.cac_env import CACGymEnv
 import numpy.random as random
 import logging
 import lexicographicqlearning
 import signal
+import numpy as np
 
 logger = logging.getLogger()
 logger.setLevel(level=logging.INFO)
@@ -104,9 +108,37 @@ def exit_handler(signum, frame):
 
 signal.signal(signal.SIGINT, exit_handler)
 
-learner.train(train_episodes=40000)
-#learner.test(test_episodes=100)
-learner.save_model()
+#learner.train(train_episodes=40000)
+learner.load_model("CAC_Env")
+LQL_rewards = learner.test(test_episodes=1000)
+#learner.save_model()
+LL_rewards = ([], [])
+for i in range(1000):
+    curr_state = env.reset()
+    total_reward = 0
+    total_constraint_reward = np.zeros(3)
+    for j in range(1000):
+        load_levels = np.zeros(len(terr_parm)+len(sat_parm))
+        reminder = curr_state
+        for k in range(len(load_levels)):
+            load_levels[-1-k] = reminder % quantization
+            reminder = reminder // quantization
+        action = np.argmin(load_levels)
+
+        new_state, reward, done, info = env.step(action)
+        curr_state = new_state
+        for _ in range(len(info)):
+            total_constraint_reward[_] += info[_]
+        total_reward += reward
+    LL_rewards[0].append(total_reward)
+    LL_rewards[1].append(total_constraint_reward)
+np.save("LQL_rewards", LQL_rewards)
+np.save("LL_rewards", LL_rewards)
+
+print(np.mean(LQL_rewards[0]))
+print(np.mean(LL_rewards[0]))
+
+
 
 
 
