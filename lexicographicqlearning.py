@@ -9,9 +9,9 @@ RENDER_REFRESH_TIME = 0.02
 NON_RENDER_REFRESH_TIME = 0.008
 
 
-#stdscr = unicurses.initscr()
-#nicurses.noecho()
-#unicurses.cbreak()
+stdscr = unicurses.initscr()
+unicurses.noecho()
+unicurses.cbreak()
 
 
 class LexicographicQTableLearner:
@@ -39,6 +39,7 @@ class LexicographicQTableLearner:
         self.qtable = np.zeros((state_size, action_size))
         self.avg_time = 0
         self.steps_per_episode = 1000
+        self.gamma = None
     
 
     def _clear_screen(self):
@@ -131,6 +132,7 @@ class LexicographicQTableLearner:
         Returns: None
         """
         (epsilon, max_epsilon, min_epsilon, decay_rate) = (1.0, 1.0, 0.01, 0.001)
+        self.gamma = gamma
         done_count = 0
         lr = lr_init
         t_episode = 0
@@ -166,6 +168,9 @@ class LexicographicQTableLearner:
                 # Taking an action, reward will contain the reward of the classic QTable, while info will contain the reward of all the Constraint QTables
                 new_state, reward, episode_done, info = self.env.step(
                     curr_action)
+                
+                if reward == 1:
+                    reward = reward - gamma #eq 11-12 paper   
                 # Keeping track of done count
                 done_count += 1 if episode_done else 0
                 # Rendering Logs
@@ -174,13 +179,18 @@ class LexicographicQTableLearner:
                 # Rendering environment
                 if render:
                     self._render_train_env()
-                # Updating all the QTables using Bellman Equation
+                # Updating only the the QTable corresponding to the UE class and the general QTable using Bellman Equation
                 self.qtable[curr_state, curr_action] = \
                     (1-lr)*self.qtable[curr_state, curr_action] + lr*(reward + gamma * min(self.qtable[new_state, :]))
                 reward_plot[0][episode] += reward
                 for c in range(len(self.constraints)):
+                    reward_constr = info[c]
+                    if reward_constr == 1:
+                        reward_constr = 1 - gamma 
+                    elif reward_constr == -1:
+                        continue # update only if UE is of class i (i.e., reward 1 or 0), if reward = -1 skip it  
                     self.qtable_constraints[c][curr_state, curr_action] = \
-                        (1-lr)*self.qtable_constraints[c][curr_state, curr_action] + lr*(info[c] + gamma * min(self.qtable_constraints[c][new_state, :]))
+                        (1-lr)*self.qtable_constraints[c][curr_state, curr_action] + lr*(reward_constr + gamma * min(self.qtable_constraints[c][new_state, :]))
                     reward_plot[c+1][episode] += info[c]
                 
                 # Environment state change
@@ -282,11 +292,13 @@ class LexicographicQTableLearner:
                     selected_q_table = self.qtable             
                 action = np.argmin(selected_q_table[state, :])
                 # Performing the action.
-                new_state, reward, done, info = self.env.step(action)
-
+                new_state, reward, done, info = self.env.step(action)                
                 total_rewards += reward
                 for _ in range(len(info)):
-                    total_constraints_rewards[_] += info[_]
+                    if info[_] == -1:
+                        total_constraints_rewards[_] += 0
+                    else:
+                        total_constraints_rewards[_] += info[_]
                 # Printing logs
                 #self._render_test_logs(
                 #    episode, test_episodes, _, total_rewards, reward, done, done_count)
@@ -362,18 +374,20 @@ class LexicographicQTableLearner:
         """
         path_complete = os.path.join(path, model_name+".npy")
         if not os.path.isfile(path_complete):
-            unicurses.addstr(f'File not found for the location {path_complete}\n')
+            #unicurses.addstr(f'File not found for the location {path_complete}\n')
+            print(f'File not found for the location {path_complete}\n')
         else:
             self.qtable = np.load(path_complete)
-            unicurses.addstr(f'Model loaded from location {model_name}\n')
+            #unicurses.addstr(f'Model loaded from location {model_name}\n')
         path_constraints = [model_name+"_constraint_"+str(i)+".npy" for i in range(len(self.constraints))]
         for i in range(len(path_constraints)):
             path_complete = os.path.join(path, path_constraints[i])
             if not os.path.isfile(path_complete):
-                unicurses.addstr(f'File not found for the location {path_complete}\n')
+                #unicurses.addstr(f'File not found for the location {path_complete}\n')
+                print(f'File not found for the location {path_complete}\n')
             else:
                 self.qtable_constraints[i] = np.load(path_complete)
-                unicurses.addstr(f'Model loaded from location {path_complete}\n')  
+                #unicurses.addstr(f'Model loaded from location {path_complete}\n')  
         sleep(3)
 
 

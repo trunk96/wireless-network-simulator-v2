@@ -44,7 +44,7 @@ class CACGymEnv(gym.Env):
             self.class_list = class_list
             class_set = set(class_list)
             self.number_of_classes = len(class_set)
-            self.observation_space = spaces.Discrete(self.number_of_classes*((self.quantization+1)**self.n_ap))
+            self.observation_space = spaces.Discrete(((self.quantization+1)**self.n_ap))
             self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue)
             
     
@@ -58,14 +58,11 @@ class CACGymEnv(gym.Env):
                     bs_obs.append(counter)
                     break
                 counter += 1
-        observation_arr = np.array(bs_obs + [self.class_list[ue_id]])
+        observation_arr = np.array(bs_obs)
         observation = 0
         # convert observation_arr (represented as mixed-radix number) to decimal number
         for i in range(len(observation_arr)):
-            if i == len(observation_arr)-1:
-                observation = observation * self.number_of_classes + observation_arr[i]
-            else:
-                observation = observation * (self.quantization+1) + observation_arr[i]
+            observation = observation * (self.quantization+1) + observation_arr[i]
         return observation
 
     def step(self, action):
@@ -83,16 +80,21 @@ class CACGymEnv(gym.Env):
 
         done = False
         # compute reward for all the Q tables
+        dropped = False
         info = np.zeros(self.number_of_classes)
         for i in range(self.number_of_classes):
             if i == self.class_list[self.current_ue_id]:
                 if (current_data_rate == None) or (current_data_rate < self.env.ue_by_id(ue_id).data_rate):
                     info[i] = 1
+                    dropped = True
                 else:
                     info[i] = 0
             else:
-                info[i] = 0
-        reward = np.sum(info)
+                info[i] = -1
+        if dropped:
+            reward = 1
+        else:
+            reward = 0
         
         # select next ue that will be scheduled (if all the UEs are scheduled yet, fast-forward steps in the environment)
         if len(self.advertised_connections) > 0:

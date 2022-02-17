@@ -15,7 +15,7 @@ logger.setLevel(level=logging.INFO)
 
 x_lim = 1000
 y_lim = 1000
-n_ue = 50
+n_ue = 27
 class_list = []
 for i in range(n_ue):
     class_list.append(i % 3)
@@ -61,8 +61,9 @@ terr_parm =[{"pos": (500, 500, 30),
     "gain": 16,
     "loss": 3,
     "bandwidth": 25,
-    "max_bitrate": 1000},
-    
+    "max_bitrate": 1000}
+] 
+'''    
     #BS5
     {"pos": (750, 700, 30),
     "freq": 1700,
@@ -91,7 +92,7 @@ terr_parm =[{"pos": (500, 500, 30),
     "gain": 16,
     "loss": 3,
     "bandwidth": 25,
-    "max_bitrate": 1000}]
+    "max_bitrate": 1000}]'''
 
 sat_parm = [{"pos": (250, 500, 35786000)}]
 env = CACGymEnv(x_lim, y_lim, class_list, terr_parm, sat_parm, quantization=quantization)
@@ -108,10 +109,13 @@ def exit_handler(signum, frame):
 
 signal.signal(signal.SIGINT, exit_handler)
 
-#learner.train(train_episodes=40000)
-learner.load_model("CAC_Env")
+learner.train(train_episodes=10000)
+learner.save_model()
+#learner.load_model("CAC_Env", path="saved_models/50UE_30mbps_gamma09_decay0_001_alpha07_quant6_0075_010_015_40000_1000/")
+#print("Model loaded")
 LQL_rewards = learner.test(test_episodes=1000)
-#learner.save_model()
+print("Model tested")
+
 LL_rewards = ([], [])
 for i in range(1000):
     curr_state = env.reset()
@@ -120,10 +124,13 @@ for i in range(1000):
     for j in range(1000):
         load_levels = np.zeros(len(terr_parm)+len(sat_parm))
         reminder = curr_state
+        print(curr_state)
         for k in range(len(load_levels)):
-            load_levels[-1-k] = reminder % quantization
+            load_levels[k] = reminder % quantization
             reminder = reminder // quantization
+        print(load_levels)
         action = np.argmin(load_levels)
+        print(action)
 
         new_state, reward, done, info = env.step(action)
         curr_state = new_state
