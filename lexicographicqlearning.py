@@ -2,16 +2,16 @@ import os
 import platform
 from time import sleep, time
 import numpy as np
-import unicurses
+#import unicurses
 import matplotlib.pyplot as plt
 
 RENDER_REFRESH_TIME = 0.02
 NON_RENDER_REFRESH_TIME = 0.008
 
 
-stdscr = unicurses.initscr()
-unicurses.noecho()
-unicurses.cbreak()
+#stdscr = unicurses.initscr()
+#unicurses.noecho()
+#unicurses.cbreak()
 
 
 class LexicographicQTableLearner:
@@ -69,21 +69,21 @@ class LexicographicQTableLearner:
         """
 
         # Clear Screen
-        #self._clear_screen()
-        unicurses.clear()
+        self._clear_screen()
+        #unicurses.clear()
 
         # Printing Logs
-        unicurses.addstr(f'Model Name     :\t{self.model_name}\n')
-        unicurses.addstr(f'Q - Table Shape:\t{self.qtable.shape}\n')
-        unicurses.addstr(f'Q - Table Constraints Shape:\t{self.qtable_constraints.shape}\n')
-        unicurses.addstr(f'Episode Number :\t{episode}/{total_episodes}\n')
-        unicurses.addstr(f'Episode Epsilon:\t{epsilon}\n')
-        unicurses.addstr(f'Episode Step   :\t{step+1}/{self.steps_per_episode}\n')
-        unicurses.addstr(f'Episode Action :\t{action}\n')
-        unicurses.addstr(f'Episode Reward :\t{reward}\n')
-        unicurses.addstr(f'Episode Done ? :\t{"Yes" if done else "No"}\n')
-        unicurses.addstr(f'Done Count     :\t{done_count}\n')
-        unicurses.refresh()
+        print(f'Model Name     :\t{self.model_name}')
+        print(f'Q - Table Shape:\t{self.qtable.shape}')
+        print(f'Q - Table Constraints Shape:\t{self.qtable_constraints.shape}')
+        print(f'Episode Number :\t{episode}/{total_episodes}')
+        print(f'Episode Epsilon:\t{epsilon}')
+        print(f'Episode Step   :\t{step+1}/{self.steps_per_episode}')
+        print(f'Episode Action :\t{action}')
+        print(f'Episode Reward :\t{reward}')
+        print(f'Episode Done ? :\t{"Yes" if done else "No"}')
+        print(f'Done Count     :\t{done_count}')
+        #unicurses.refresh()
 
     def _render_train_env(self):
         """Renders the environment."""
@@ -111,13 +111,12 @@ class LexicographicQTableLearner:
 
         time_left = int(self.avg_time*episode_left)
         time_left = (time_left//60, time_left % 60)
-        #print()
-        unicurses.addstr(
-            f'Time Left            :\t{time_left[0]} mins  {time_left[1]} secs\n')
-        unicurses.addstr(f'Average Episode Time :\t{np.round(self.avg_time,4)} secs\n')
-        unicurses.addstr(f'Current Episode Time :\t{np.round(episode_t,4)} secs\n')
-        unicurses.addstr(f'Current Step Time    :\t{np.round(step_t,4)} secs\n')
-        unicurses.refresh()
+        print()
+        print(f'Time Left            :\t{time_left[0]} mins  {time_left[1]} secs')
+        print(f'Average Episode Time :\t{np.round(self.avg_time,4)} secs')
+        print(f'Current Episode Time :\t{np.round(episode_t,4)} secs')
+        print(f'Current Step Time    :\t{np.round(step_t,4)} secs')
+        #unicurses.refresh()
         #sleep(RENDER_REFRESH_TIME if render else NON_RENDER_REFRESH_TIME)
 
     def train(self, train_episodes=10000, lr_init=0.7, gamma=0.9, render=False):
@@ -191,7 +190,7 @@ class LexicographicQTableLearner:
                         continue # update only if UE is of class i (i.e., reward 1 or 0), if reward = -1 skip it  
                     self.qtable_constraints[c][curr_state, curr_action] = \
                         (1-lr)*self.qtable_constraints[c][curr_state, curr_action] + lr*(reward_constr + gamma * min(self.qtable_constraints[c][new_state, :]))
-                    reward_plot[c+1][episode] += info[c]
+                    reward_plot[c+1][episode] += reward_constr
                 
                 # Environment state change
                 curr_state = new_state
@@ -229,18 +228,18 @@ class LexicographicQTableLearner:
         """
 
         # Clear Screen
-        #self._clear_screen()
-        unicurses.clear()
+        self._clear_screen()
+        #unicurses.clear()
 
         # Printing Logs
-        unicurses.addstr(f'Model Name     :\t{self.model_name}\n')
-        unicurses.addstr(f'Episode Number :\t{episode}/{total_episodes}\n')
-        unicurses.addstr(f'Episode Step   :\t{step+1}/{self.steps_per_episode}\n')
-        unicurses.addstr(f'Episode Reward :\t{episode_reward}\n')
-        unicurses.addstr(f'Step Reward    :\t{step_reward}\n')
-        unicurses.addstr(f'Episode Done ? :\t{"Yes" if done else "No"}\n')
-        unicurses.addstr(f'Done Count     :\t{done_count}\n')
-        unicurses.refresh()
+        print(f'Model Name     :\t{self.model_name}')
+        print(f'Episode Number :\t{episode}/{total_episodes}')
+        print(f'Episode Step   :\t{step+1}/{self.steps_per_episode}')
+        print(f'Episode Reward :\t{episode_reward}')
+        print(f'Step Reward    :\t{step_reward}')
+        print(f'Episode Done ? :\t{"Yes" if done else "No"}')
+        print(f'Done Count     :\t{done_count}')
+        #unicurses.refresh()
 
     def _render_test_env(self, render):
         """Renders the environment
@@ -361,7 +360,7 @@ class LexicographicQTableLearner:
             np.save(path_constraints[i]+"_reward", self.training_reward_plot[i+1])
             # plt.plot(self.training_reward_plot[i+1])
             # plt.savefig(path_constraints[i]+".png")
-        unicurses.addstr(f'Model saved at location :\t{path}\n')
+        print(f'Model saved at location :\t{path}\n')
         sleep(3)
 
     def load_model(self, model_name, path=""):

@@ -14,7 +14,7 @@ logger.setLevel(level=logging.INFO)
 
 
 x_lim = 1000
-y_lim = 1000
+y_lim = 600
 n_ue = 27
 class_list = []
 for i in range(n_ue):
@@ -112,7 +112,7 @@ signal.signal(signal.SIGINT, exit_handler)
 learner.train(train_episodes=10000)
 learner.save_model()
 #learner.load_model("CAC_Env", path="saved_models/50UE_30mbps_gamma09_decay0_001_alpha07_quant6_0075_010_015_40000_1000/")
-#print("Model loaded")
+print("Model loaded")
 LQL_rewards = learner.test(test_episodes=1000)
 print("Model tested")
 
@@ -128,13 +128,16 @@ for i in range(1000):
         for k in range(len(load_levels)):
             load_levels[k] = reminder % quantization
             reminder = reminder // quantization
-        print(load_levels)
+        print(f"Load Level: {load_levels}")
         action = np.argmin(load_levels)
-        print(action)
+        print(f"Action chosen: {action}")
 
-        new_state, reward, done, info = env.step(action)
+        new_state, reward, done, info = env.step(action+1)
         curr_state = new_state
         for _ in range(len(info)):
+            reward_constr = info[_]
+            if reward_constr == -1:
+                reward_constr = 0
             total_constraint_reward[_] += info[_]
         total_reward += reward
     LL_rewards[0].append(total_reward)

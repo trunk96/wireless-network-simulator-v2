@@ -9,6 +9,7 @@ import numpy.random as random
 import logging
 import numpy as np
 import copy
+import math
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
@@ -22,7 +23,7 @@ class CACGymEnv(gym.Env):
         self.init_pos = []  # for reset method
         for i in range(0, n_ue):
             pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
-            self.env.add_user(UserEquipment(self.env, i, 30, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
+            self.env.add_user(UserEquipment(self.env, i, 25, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
             self.init_pos.append(pos)
         for i in range(len(terr_parm)):
             self.env.add_base_station(NRBaseStation(self.env, i, terr_parm[i]["pos"], terr_parm[i]["freq"], terr_parm[i]["bandwidth"], terr_parm[i]["numerology"], terr_parm[i]["max_bitrate"], terr_parm[i]["power"], terr_parm[i]["gain"], terr_parm[i]["loss"]))
@@ -52,13 +53,9 @@ class CACGymEnv(gym.Env):
         bs_obs = []
         for j in range(self.n_ap):
             l = self.env.bs_by_id(j).get_usage_ratio()
-            counter = 0
-            for i in np.arange(0, 1, 1/self.quantization):
-                if l <= i:
-                    bs_obs.append(counter)
-                    break
-                counter += 1
+            bs_obs.append(math.floor(self.quantization * l))
         observation_arr = np.array(bs_obs)
+        print(observation_arr)
         observation = 0
         # convert observation_arr (represented as mixed-radix number) to decimal number
         for i in range(len(observation_arr)):
