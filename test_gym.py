@@ -10,12 +10,12 @@ import signal
 import numpy as np
 
 logger = logging.getLogger()
-logger.setLevel(level=logging.INFO)
+logger.setLevel(level=logging.WARNING)
 
 
 x_lim = 1000
 y_lim = 600
-n_ue = 27
+n_ue = 100 
 class_list = []
 for i in range(n_ue):
     class_list.append(i % 3)
@@ -109,9 +109,9 @@ def exit_handler(signum, frame):
 
 signal.signal(signal.SIGINT, exit_handler)
 
-learner.train(train_episodes=10000)
-learner.save_model()
-#learner.load_model("CAC_Env", path="saved_models/50UE_30mbps_gamma09_decay0_001_alpha07_quant6_0075_010_015_40000_1000/")
+#learner.train(train_episodes=100000)
+#learner.save_model()
+learner.load_model("CAC_Env", path="saved_models/100UE_50mbps_5BS_100000_1000/")
 print("Model loaded")
 LQL_rewards = learner.test(test_episodes=1000)
 print("Model tested")
@@ -138,7 +138,7 @@ for i in range(1000):
             reward_constr = info[_]
             if reward_constr == -1:
                 reward_constr = 0
-            total_constraint_reward[_] += info[_]
+            total_constraint_reward[_] += reward_constr
         total_reward += reward
     LL_rewards[0].append(total_reward)
     LL_rewards[1].append(total_constraint_reward)

@@ -130,7 +130,7 @@ class LexicographicQTableLearner:
 
         Returns: None
         """
-        (epsilon, max_epsilon, min_epsilon, decay_rate) = (1.0, 1.0, 0.01, 0.001)
+        (epsilon, max_epsilon, min_epsilon, decay_rate) = (1.0, 1.0, 0.01, 0.0001)
         self.gamma = gamma
         done_count = 0
         lr = lr_init
@@ -173,7 +173,8 @@ class LexicographicQTableLearner:
                 # Keeping track of done count
                 done_count += 1 if episode_done else 0
                 # Rendering Logs
-                self._render_train_logs(episode, train_episodes, epsilon, curr_step, curr_action,
+                if episode%100 == 0:
+                    self._render_train_logs(episode, train_episodes, epsilon, curr_step, curr_action,
                                         reward, episode_done, done_count)
                 # Rendering environment
                 if render:
@@ -197,7 +198,8 @@ class LexicographicQTableLearner:
 
                 # Step Time Calculation
                 t_step = time() - t_s_step
-                self._render_train_time(train_episodes-episode, t_episode,
+                if episode % 100 == 0:
+                    self._render_train_time(train_episodes-episode, t_episode,
                                         t_step, episode_done, self.steps_per_episode-1 == curr_step, render)
 
                 if episode_done:
@@ -299,8 +301,9 @@ class LexicographicQTableLearner:
                     else:
                         total_constraints_rewards[_] += info[_]
                 # Printing logs
-                #self._render_test_logs(
-                #    episode, test_episodes, _, total_rewards, reward, done, done_count)
+                if episode % 100 == 0:
+                    self._render_test_logs(
+                        episode, test_episodes, _, total_rewards, reward, done, done_count)
                 # Render Environment
                 #self._render_test_env(render)
 
