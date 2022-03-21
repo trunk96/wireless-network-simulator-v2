@@ -4,6 +4,7 @@ from time import sleep, time
 import numpy as np
 #import unicurses
 import matplotlib.pyplot as plt
+import copy
 
 RENDER_REFRESH_TIME = 0.02
 NON_RENDER_REFRESH_TIME = 0.008
@@ -150,20 +151,40 @@ class LexicographicQTableLearner:
                 # Choosing QTable to be used based on which constraint is not satisfied
                 c = 0
                 constraint_violated = False
+                avail_actions = range(self.env.action_space.n)
                 for c in range(len(self.constraints)):
                     #print(curr_state)
                     #print(self.qtable_constraints[c][curr_state, :])
-                    if max(self.qtable_constraints[c][curr_state, :]) > self.constraints[c]:
+                    curr_avail_actions = copy.deepcopy(avail_actions)
+                    for action in curr_avail_actions:
+                        if self.qtable_constraints[c][curr_state, action] > self.constraints[c]:
+                            try:
+                                curr_avail_actions.remove(action)
+                            except:
+                                pass
+                    if len(curr_avail_actions) == 0:
+                    #if max(self.qtable_constraints[c][curr_state, :]) > self.constraints[c]:
                         constraint_violated = True
                         break
+                    else:
+                        avail_actions = curr_avail_actions
                 selected_q_table = None
                 if constraint_violated:
                     selected_q_table = self.qtable_constraints[c]
                 else:
                     selected_q_table = self.qtable
-                # Choosing action based on tradeoff. Random action or action from QTable.               
-                curr_action = np.argmin(
-                    selected_q_table[curr_state, :]) if ee_tradeoff > epsilon else self.env.action_space.sample()
+                # Choosing action based on tradeoff. Random action or action from QTable.
+                if ee_tradeoff > epsilon:
+                    action_min = avail_actions[0]
+                    value_min = selected_q_table[curr_state, avail_actions[0]]
+                    # Choose only among available actions, in order to do not harm previous constraints
+                    for action in avail_actions:
+                        if selected_q_table[curr_state, action] < value_min:
+                            value_min = selected_q_table[curr_state, action]
+                            action_min = action
+                    curr_action = action_min
+                else:
+                    curr_action = self.env.action_space.sample()
                 # Taking an action, reward will contain the reward of the classic QTable, while info will contain the reward of all the Constraint QTables
                 new_state, reward, episode_done, info = self.env.step(
                     curr_action)
@@ -282,16 +303,36 @@ class LexicographicQTableLearner:
                 # Selecting the best action from the appropriate QTable
                 c = 0
                 constraint_violated = False
+                avail_actions = range(self.env.action_space.n)
                 for c in range(len(self.constraints)):
-                    if max(self.qtable_constraints[c][state, :]) > self.constraints[c]:
+                    #print(curr_state)
+                    #print(self.qtable_constraints[c][curr_state, :])
+                    curr_avail_actions = copy.deepcopy(avail_actions)
+                    for action in curr_avail_actions:
+                        if self.qtable_constraints[c][state, action] > self.constraints[c]:
+                            try:
+                                curr_avail_actions.remove(action)
+                            except:
+                                pass
+                    if len(curr_avail_actions) == 0:
+                    #if max(self.qtable_constraints[c][curr_state, :]) > self.constraints[c]:
                         constraint_violated = True
                         break
+                    else:
+                        avail_actions = curr_avail_actions
                 selected_q_table = None
                 if constraint_violated:
                     selected_q_table = self.qtable_constraints[c]
                 else:
                     selected_q_table = self.qtable             
-                action = np.argmin(selected_q_table[state, :])
+                action_min = avail_actions[0]
+                value_min = selected_q_table[state, avail_actions[0]]
+                # Choose only among available actions, in order to do not harm previous constraints
+                for action in avail_actions:
+                    if selected_q_table[state, action] < value_min:
+                        value_min = selected_q_table[state, action]
+                        action_min = action
+                action = action_min
                 # Performing the action.
                 new_state, reward, done, info = self.env.step(action)                
                 total_rewards += reward
