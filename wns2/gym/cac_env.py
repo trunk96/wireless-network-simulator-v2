@@ -42,11 +42,12 @@ class CACGymEnv(gym.Env):
             self.x_lim = x_lim
             self.y_lim = y_lim
             self.quantization = quantization
+            self.datarate = datarate
             self.class_list = class_list
             class_set = set(class_list)
             self.number_of_classes = len(class_set)
             self.observation_space = spaces.Discrete(((self.quantization+1)**self.n_ap))
-            self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue, datarate)
+            self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue, self.datarate)
             
     
     def observe(self, ue_id):
@@ -128,7 +129,7 @@ class CACGymEnv(gym.Env):
         return observation, reward, done, info
 
     def reset(self):
-        self.init_env(self.x_lim, self.y_lim, self.terr_parm, self.sat_parm, self.n_ue)
+        self.init_env(self.x_lim, self.y_lim, self.terr_parm, self.sat_parm, self.n_ue, self.datarate)
         self.env.step()
         self.advertised_connections = copy.deepcopy(self.env.connection_advertisement)
         # step until at least one UE wants to connect
