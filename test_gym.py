@@ -95,7 +95,7 @@ terr_parm =[{"pos": (500, 500, 30),
     "max_bitrate": 1000}]'''
 
 sat_parm = [{"pos": (250, 500, 35786000)}]
-env = CACGymEnv(x_lim, y_lim, class_list, terr_parm, sat_parm, quantization=quantization)
+env = CACGymEnv(x_lim, y_lim, class_list, terr_parm, sat_parm, datarate = 50, quantization=quantization)
 learner = lexicographicqlearning.LexicographicQTableLearner(env, "CAC_Env", [0.075, 0.10, 0.15])
 
 def exit_handler(signum, frame):

@@ -18,12 +18,12 @@ class CACGymEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     QUANTIZATION = 5 #0%, 20%, 40%, 60%, 80% 100%
 
-    def init_env(self, x_lim, y_lim, terr_parm, sat_parm, n_ue):
+    def init_env(self, x_lim, y_lim, terr_parm, sat_parm, n_ue, datarate):
         self.env = Environment(x_lim, y_lim, renderer = CustomRenderer())
         self.init_pos = []  # for reset method
         for i in range(0, n_ue):
             pos = (random.rand()*x_lim, random.rand()*y_lim, 1)
-            self.env.add_user(UserEquipment(self.env, i, 50, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
+            self.env.add_user(UserEquipment(self.env, i, datarate, pos, speed = 0, direction = random.randint(0, 360), _lambda_c=5, _lambda_d = 15))
             self.init_pos.append(pos)
         for i in range(len(terr_parm)):
             self.env.add_base_station(NRBaseStation(self.env, i, terr_parm[i]["pos"], terr_parm[i]["freq"], terr_parm[i]["bandwidth"], terr_parm[i]["numerology"], terr_parm[i]["max_bitrate"], terr_parm[i]["power"], terr_parm[i]["gain"], terr_parm[i]["loss"]))
@@ -33,7 +33,7 @@ class CACGymEnv(gym.Env):
         self.sat_parm = sat_parm
         
 
-    def __init__(self, x_lim, y_lim, class_list, terr_parm, sat_parm, quantization = QUANTIZATION):
+    def __init__(self, x_lim, y_lim, class_list, terr_parm, sat_parm, datarate = 25, quantization = QUANTIZATION):
             super(CACGymEnv, self).__init__()
             self.n_ap = len(terr_parm)+len(sat_parm)
             self.action_space = spaces.Discrete(self.n_ap+1)
@@ -46,7 +46,7 @@ class CACGymEnv(gym.Env):
             class_set = set(class_list)
             self.number_of_classes = len(class_set)
             self.observation_space = spaces.Discrete(((self.quantization+1)**self.n_ap))
-            self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue)
+            self.init_env(x_lim, y_lim, terr_parm, sat_parm, self.n_ue, datarate)
             
     
     def observe(self, ue_id):
